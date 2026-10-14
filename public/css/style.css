@@ -1,0 +1,437 @@
+/* Custom Styles for UniPrep */
+
+/* Hide scrollbars for pill bars */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Modal Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Category Filter Pills */
+.cat-pill {
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cat-pill:hover {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+.cat-pill.active {
+  background-color: #00a86b !important;
+  color: #ffffff !important;
+  border-color: #00a86b !important;
+}
+
+/* Exam Card Styling */
+.exam-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.exam-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.08);
+}
+
+/* Question Option Selection */
+.option-label {
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+}
+
+.option-label:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.option-label.selected {
+  border-color: #10b981 !important;
+  background-color: #f0fdf4 !important;
+}
+
+.option-label.selected .radio-circle {
+  border-color: #10b981;
+  background-color: #10b981;
+}
+
+.option-label.selected .radio-inner-dot {
+  opacity: 1;
+}
+
+/* Review / Explanation States */
+.option-label.correct-review {
+  border-color: #10b981 !important;
+  background-color: #ecfdf5 !important;
+}
+
+.option-label.wrong-review {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+}
+
+/* Active Question in Test Taking (Matching Image 2) */
+.question-card.active-question {
+  border: 2px solid #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
+}
+
+.question-card.active-question .q-badge {
+  background-color: #00a86b !important;
+  color: #ffffff !important;
+}
+
+/* Palette Grid Items (Matching Image 2) */
+.palette-btn {
+  transition: all 0.15s ease;
+  min-height: 44px;
+}
+
+.palette-btn.unanswered {
+  background-color: #f1f5f9;
+  color: #334155;
+  border: 1px solid transparent;
+}
+
+.palette-btn.unanswered:hover {
+  background-color: #e2e8f0;
+}
+
+.palette-btn.answered {
+  background-color: #00a86b !important;
+  color: #ffffff !important;
+  border-color: #00a86b !important;
+}
+
+.palette-btn.current {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+/* ================================================================ */
+/* DARK MODE THEME STYLES (Chế độ tối)                              */
+/* ================================================================ */
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0b1120 !important;
+  color: #f1f5f9 !important;
+}
+
+/* Header & Navigation */
+html.dark header#main-header {
+  background-color: #111827 !important;
+  border-color: #1f2937 !important;
+}
+
+html.dark #nav-exam-title-container {
+  border-color: #374151 !important;
+}
+
+html.dark #nav-exam-title {
+  color: #f9fafb !important;
+}
+
+html.dark #nav-kho-de-btn {
+  background-color: rgba(6, 78, 59, 0.4) !important;
+  color: #34d399 !important;
+}
+
+html.dark #nav-kho-de-btn:hover {
+  background-color: rgba(6, 78, 59, 0.6) !important;
+}
+
+html.dark #nav-admin-btn {
+  color: #cbd5e1 !important;
+}
+
+html.dark #nav-admin-btn:hover {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+html.dark #nav-timer {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+}
+
+html.dark #nav-back-btn:hover,
+html.dark #admin-home-btn:hover {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+/* Common Backgrounds & Borders */
+html.dark .bg-white {
+  background-color: #111827 !important;
+}
+
+html.dark .bg-gray-50,
+html.dark .bg-gray-50\/50,
+html.dark .bg-gray-50\/40,
+html.dark .bg-gray-50\/30 {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-gray-100 {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+}
+
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-gray-300 {
+  border-color: #1f2937 !important;
+}
+
+/* Typography Overrides */
+html.dark .text-gray-900,
+html.dark .text-gray-800 {
+  color: #f9fafb !important;
+}
+
+html.dark .text-gray-700,
+html.dark .text-gray-600 {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-gray-500,
+html.dark .text-gray-400 {
+  color: #94a3b8 !important;
+}
+
+/* Form Inputs, Selects, Textareas */
+html.dark input[type="text"],
+html.dark input[type="password"],
+html.dark input[type="number"],
+html.dark textarea,
+html.dark select {
+  background-color: #0b1120 !important;
+  border-color: #374151 !important;
+  color: #f9fafb !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Category Filter Pills */
+html.dark .cat-pill {
+  background-color: #111827 !important;
+  border-color: #374151 !important;
+  color: #94a3b8 !important;
+}
+
+html.dark .cat-pill:hover {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+html.dark .cat-pill.active {
+  background-color: #00a86b !important;
+  border-color: #00a86b !important;
+  color: #ffffff !important;
+}
+
+/* Exam Card */
+html.dark .exam-card {
+  background-color: #111827 !important;
+  border-color: #1f2937 !important;
+}
+
+html.dark .exam-card:hover {
+  border-color: #374151 !important;
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Question Cards & Options */
+html.dark .question-card {
+  background-color: #111827 !important;
+  border-color: #1f2937 !important;
+}
+
+html.dark .question-card.active-question {
+  border-color: #10b981 !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2) !important;
+}
+
+html.dark .q-badge {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+}
+
+html.dark .question-card.active-question .q-badge {
+  background-color: #00a86b !important;
+  color: #ffffff !important;
+}
+
+/* Options */
+html.dark .option-label {
+  background-color: #111827;
+  border-color: #1f2937;
+  color: #e5e7eb;
+}
+
+html.dark .option-label:hover {
+  background-color: #1e293b;
+  border-color: #374151;
+}
+
+html.dark .option-label.selected {
+  background-color: rgba(6, 78, 59, 0.4) !important;
+  border-color: #10b981 !important;
+}
+
+html.dark .option-label.border-emerald-500,
+html.dark .option-label.bg-\[\#ecfdf5\] {
+  background-color: rgba(6, 78, 59, 0.35) !important;
+  border-color: #10b981 !important;
+}
+
+html.dark .option-label.border-rose-400,
+html.dark .option-label.bg-\[\#fff1f2\] {
+  background-color: rgba(136, 19, 55, 0.35) !important;
+  border-color: #f43f5e !important;
+}
+
+/* Right Question Palette */
+html.dark .palette-btn.unanswered {
+  background-color: #1f2937 !important;
+  color: #94a3b8 !important;
+}
+
+html.dark .palette-btn.unanswered:hover {
+  background-color: #374151 !important;
+  color: #f9fafb !important;
+}
+
+html.dark .palette-btn.answered {
+  background-color: #00a86b !important;
+  color: #ffffff !important;
+}
+
+/* Mode Banner */
+html.dark #exam-mode-banner {
+  background-color: rgba(6, 78, 59, 0.25) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+/* AI Explanation Box */
+html.dark [id^="ai-box-"] {
+  background-color: #0b1120 !important;
+  border-color: #064e3b !important;
+}
+
+html.dark .bg-\[\#fff1f2\] {
+  background-color: rgba(136, 19, 55, 0.3) !important;
+  border-color: #f43f5e !important;
+  color: #fecdd3 !important;
+}
+
+html.dark .bg-\[\#e6f9f0\] {
+  background-color: rgba(6, 78, 59, 0.4) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+/* AI Interactive Drawer */
+html.dark [id^="ai-chat-"] {
+  background-color: #0b1120 !important;
+  border-color: #1f2937 !important;
+}
+
+html.dark [id^="ai-chat-reply-"] {
+  background-color: #111827 !important;
+  border-color: #064e3b !important;
+  color: #f1f5f9 !important;
+}
+
+/* Modals */
+html.dark #result-modal > div > div,
+html.dark #admin-login-modal > div > div {
+  background-color: #111827 !important;
+  border-color: #1f2937 !important;
+}
+
+html.dark #admin-edit-alert {
+  background-color: rgba(30, 58, 138, 0.3) !important;
+  border-color: #1e40af !important;
+}
+
+/* Admin Dashboard Tables & Cards */
+html.dark thead tr {
+  background-color: #0b1120 !important;
+  border-color: #1f2937 !important;
+}
+
+html.dark thead th {
+  color: #94a3b8 !important;
+}
+
+html.dark tbody tr:hover {
+  background-color: #1f2937 !important;
+}
+
+html.dark .manual-q-card,
+html.dark [id^="parsed-q-card-"] {
+  background-color: #111827 !important;
+  border-color: #1f2937 !important;
+}
+
+html.dark #word-dropzone {
+  background-color: rgba(6, 78, 59, 0.15) !important;
+  border-color: #064e3b !important;
+}
+
+html.dark [id^="ai-chat-"] button.rounded-full {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #cbd5e1 !important;
+}
+
+html.dark [id^="ai-chat-"] button.rounded-full:hover {
+  background-color: #374151 !important;
+  border-color: #10b981 !important;
+  color: #34d399 !important;
+}
+
+html.dark .manual-q-card input {
+  background-color: #0b1120 !important;
+  color: #f8fafc !important;
+}
+
+
+

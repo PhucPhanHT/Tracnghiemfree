@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniPrep - Nền Tảng Luyện Thi & Trắc Nghiệm Trực Tuyến</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              primary: '#00a86b'
+            }
+          }
+        }
+      }
+    };
+
+    // Immediate Theme Initialization to avoid flicker (FOUC)
+    (function() {
+      const saved = localStorage.getItem('uniprep_theme');
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-[#f8fafc] text-gray-800 font-sans min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- ================= TOP NAVBAR ================= -->
+  <header id="main-header" class="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Logo & Back Button -->
+      <div class="flex items-center space-x-3">
+        <!-- Back button (visible when taking exam or inside admin) -->
+        <button id="nav-back-btn" class="hidden p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors" title="Quay lại">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+        </button>
+
+        <!-- Brand Logo -->
+        <a href="#" id="nav-brand-btn" class="flex items-center space-x-2.5 group">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+            <!-- Graduation Cap Icon -->
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
+            </svg>
+          </div>
+          <span class="text-xl font-bold tracking-tight text-gray-900">UniPrep</span>
+        </a>
+
+        <!-- Center Exam Title (visible in exam view) -->
+        <div id="nav-exam-title-container" class="hidden pl-4 border-l border-gray-200">
+          <h2 id="nav-exam-title" class="text-sm sm:text-base font-semibold text-gray-800 truncate max-w-xs md:max-w-md lg:max-w-xl">
+            Đề thi giữa kỳ Triết học Mác-Lênin 2023
+          </h2>
+        </div>
+      </div>
+
+      <!-- Right Header Actions -->
+      <div class="flex items-center space-x-3">
+        <!-- Normal Navigation Links -->
+        <div id="nav-standard-links" class="flex items-center space-x-2">
+          <button id="nav-kho-de-btn" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
+            Kho đề thi
+          </button>
+          <button id="nav-admin-btn" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 flex items-center space-x-1.5 transition-colors">
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <span>Quản trị & Up đề</span>
+          </button>
+        </div>
+
+        <!-- Exam View Header Controls (Countdown Timer & Submit Button) -->
+        <div id="nav-exam-controls" class="hidden flex items-center space-x-3">
+          <!-- AI Instant Explanation Toggle (Matching Screenshot!) -->
+          <label id="toggle-instant-ai-container" class="cursor-pointer hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#e6f9f0] border border-emerald-200 text-xs font-bold text-[#00a86b] hover:bg-[#d0f5e2] transition-colors select-none" title="Bật/Tắt hiển thị phân tích AI ngay khi chọn đáp án">
+            <input type="checkbox" id="toggle-instant-ai" checked class="rounded text-[#00a86b] focus:ring-emerald-500 w-3.5 h-3.5 accent-[#00a86b]">
+            <span class="flex items-center space-x-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+              </svg>
+              <span>AI giải thích ngay</span>
+            </span>
+          </label>
+
+          <!-- Button Tráo câu hỏi trực tiếp -->
+          <button type="button" id="btn-reshuffle-header" onclick="ExamRunner.shuffleExam(true)" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 flex items-center space-x-1.5 transition-colors shadow-2xs" title="Đảo ngẫu nhiên lại thứ tự toàn bộ câu hỏi">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span>🔀 Tráo câu</span>
+          </button>
+
+          <!-- Timer Display -->
+          <div id="nav-timer" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 font-mono text-sm font-semibold">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span id="nav-timer-text">45:00</span>
+          </div>
+
+          <!-- Nộp bài Button (exact match of Image 2) -->
+          <button id="nav-submit-btn" class="px-4 py-1.5 rounded-lg text-sm font-semibold bg-[#e6f9f0] text-[#00a86b] hover:bg-[#d0f5e2] flex items-center space-x-1.5 transition-colors border border-emerald-200 shadow-sm">
+            <!-- Flag icon -->
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path>
+            </svg>
+            <span>Nộp bài</span>
+          </button>
+        </div>
+
+        <!-- Dark / Light Mode Toggle Button -->
+        <button id="theme-toggle-btn" type="button" class="p-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-600 dark:text-amber-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all shadow-xs shrink-0" title="Chuyển chế độ Sáng / Tối" aria-label="Chuyển giao diện sáng tối">
+          <!-- Sun Icon (visible in dark mode) -->
+          <svg id="theme-icon-sun" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+          <!-- Moon Icon (visible in light mode) -->
+          <svg id="theme-icon-moon" class="w-5 h-5 block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTAINER ================= -->
+  <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- VIEW 1: KHO ĐỀ THI (Matching Screenshot 3) -->
+    <!-- ------------------------------------------------------------- -->
+    <section id="view-home" class="block">
+      <!-- Title & Subtitle -->
+      <div class="mb-6">
+        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Kho đề thi</h1>
+        <p class="mt-1 text-gray-500 text-sm sm:text-base">Lựa chọn bộ đề phù hợp để bắt đầu luyện tập hoặc kiểm tra ngay.</p>
+      </div>
+
+      <!-- Categories Filter Pills Bar & Search -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <!-- Category Pills (matching screenshot 3) -->
+        <div id="category-pills" class="flex flex-wrap items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <!-- Filled dynamically by JavaScript -->
+          <button class="cat-pill active px-4 py-2 rounded-full text-sm font-semibold bg-[#00a86b] text-white transition-all shadow-sm">
+            Tất cả
+          </button>
+        </div>
+
+        <!-- Search Box -->
+        <div class="relative min-w-[240px] max-w-xs w-full">
+          <input type="text" id="exam-search-input" placeholder="Tìm kiếm bộ đề..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+          <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Exams Grid (matching screenshot 3) -->
+      <div id="exams-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="exams-empty" class="hidden text-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">
+        <div class="w-16 h-16 mx-auto mb-4 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800">Không tìm thấy bộ đề nào</h3>
+        <p class="text-sm text-gray-500 mt-1">Hãy thử tìm với từ khóa khác hoặc chuyển danh mục.</p>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- VIEW 2: GIAO DIỆN LÀM BÀI (Matching Screenshot 2) -->
+    <!-- ------------------------------------------------------------- -->
+    <section id="view-exam" class="hidden">
+      <div class="flex flex-col lg:flex-row gap-8 items-start">
+        
+        <!-- Left Main: Question Cards List -->
+        <div class="w-full lg:w-3/4 space-y-6">
+          
+          <!-- Mode info banner -->
+          <div id="exam-mode-banner" class="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5 flex items-center justify-between text-sm">
+            <div class="flex items-center space-x-2 text-emerald-900 font-medium">
+              <span id="mode-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white">Kiểm tra</span>
+              <span id="mode-desc">Thời gian làm bài có giới hạn. Nhấn "Nộp bài" khi hoàn thành.</span>
+            </div>
+            <div class="text-xs text-gray-500" id="answered-stat-banner">
+              Đã làm: <b class="text-emerald-700" id="stat-answered-count">0</b>/<span id="stat-total-count">0</span> câu
+            </div>
+          </div>
+
+          <!-- Questions Container -->
+          <div id="questions-container" class="space-y-6">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <!-- Bottom Submit Action -->
+          <div class="pt-6 border-t border-gray-200 flex items-center justify-between">
+            <button id="bottom-back-btn" class="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50">
+              Quay lại danh sách
+            </button>
+            <button id="bottom-submit-btn" class="px-6 py-2.5 rounded-xl bg-[#00a86b] text-white font-semibold text-sm hover:bg-emerald-700 shadow-md shadow-emerald-600/20 flex items-center space-x-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              <span>Nộp bài & Chấm điểm</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Sticky Sidebar: Question Palette (Exact match of Image 2) -->
+        <div class="w-full lg:w-1/4 lg:sticky lg:top-24">
+          <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+            <!-- Title -->
+            <h3 class="text-base font-bold text-gray-900 mb-3">Danh sách câu hỏi</h3>
+            
+            <!-- Legend (Green dot Đã làm, Gray dot Chưa làm) -->
+            <div class="flex items-center space-x-4 text-xs font-medium text-gray-500 mb-4 pb-3 border-b border-gray-100">
+              <div class="flex items-center space-x-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#00a86b]"></span>
+                <span>Đã làm</span>
+              </div>
+              <div class="flex items-center space-x-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-gray-300"></span>
+                <span>Chưa làm</span>
+              </div>
+            </div>
+
+            <!-- Question Numbers Grid (5 columns, 1..N) -->
+            <div id="palette-grid" class="grid grid-cols-5 gap-2.5">
+              <!-- Rendered dynamically -->
+            </div>
+
+            <!-- Fast Actions in Sidebar -->
+            <div class="mt-6 pt-4 border-t border-gray-100 space-y-2.5">
+              <button type="button" onclick="ExamRunner.shuffleExam(true)" class="w-full py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs flex items-center justify-center space-x-1.5 transition-colors shadow-2xs" title="Đảo ngẫu nhiên lại thứ tự câu hỏi">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                <span>🔀 Đảo ngẫu nhiên câu hỏi</span>
+              </button>
+
+              <button id="sidebar-submit-btn" class="w-full py-2.5 rounded-xl bg-[#00a86b] hover:bg-emerald-700 text-white font-semibold text-sm shadow-sm transition-all text-center">
+                Nộp bài ngay
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- VIEW 3: ADMIN DASHBOARD & UPLOAD ĐỀ -->
+    <!-- ------------------------------------------------------------- -->
+    <section id="view-admin" class="hidden">
+      <!-- Admin Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-200">
+        <div>
+          <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center space-x-2">
+            <span>Bảng Quản Trị & Đăng Đề Thi</span>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">Admin</span>
+          </h1>
+          <p class="text-sm text-gray-500 mt-0.5">Quản lý kho đề thi, tải đề tự động từ văn bản / Word và xem thống kê làm bài.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-gray-100 border border-gray-200 text-xs font-semibold text-gray-700">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="admin-user-display">Quản Trị Viên (admin)</span>
+          </div>
+
+          <button id="admin-logout-btn" class="px-3 py-2 rounded-xl border border-rose-200 text-rose-600 text-xs sm:text-sm font-semibold hover:bg-rose-50 flex items-center space-x-1.5 transition-colors" title="Đăng xuất khỏi hệ thống">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            <span>Đăng xuất</span>
+          </button>
+
+          <button id="admin-home-btn" class="px-4 py-2 rounded-xl border border-gray-200 text-gray-700 text-xs sm:text-sm font-semibold hover:bg-gray-50 flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+            <span>Về trang chủ</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin Stats Cards Row -->
+      <div id="admin-stats-row" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <!-- Total Exams -->
+        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 font-medium">Tổng số đề thi</div>
+            <div id="admin-stat-exams" class="text-2xl font-black text-gray-900 mt-0.5">0</div>
+          </div>
+        </div>
+
+        <!-- Total Questions -->
+        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 font-medium">Tổng câu hỏi</div>
+            <div id="admin-stat-questions" class="text-2xl font-black text-gray-900 mt-0.5">0</div>
+          </div>
+        </div>
+
+        <!-- Submissions -->
+        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 font-medium">Lượt làm bài</div>
+            <div id="admin-stat-submissions" class="text-2xl font-black text-gray-900 mt-0.5">0</div>
+          </div>
+        </div>
+
+        <!-- Average Score -->
+        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 font-medium">Điểm TB học viên</div>
+            <div id="admin-stat-avg" class="text-2xl font-black text-gray-900 mt-0.5">0.0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Tabs Navigation -->
+      <div class="flex items-center space-x-2 border-b border-gray-200 mb-6">
+        <button id="admin-tab-upload-btn" class="admin-tab-btn active px-4 py-2.5 text-sm font-bold border-b-2 border-emerald-600 text-emerald-700">
+          Tải Lên / Tạo Đề Thi Mới
+        </button>
+        <button id="admin-tab-list-btn" class="admin-tab-btn px-4 py-2.5 text-sm font-bold border-b-2 border-transparent text-gray-500 hover:text-gray-800">
+          Danh Sách Đề Thi
+        </button>
+        <button id="admin-tab-history-btn" class="admin-tab-btn px-4 py-2.5 text-sm font-bold border-b-2 border-transparent text-gray-500 hover:text-gray-800">
+          Lịch Sử Làm Bài
+        </button>
+      </div>
+
+      <!-- TAB CONTENT 1: UPLOAD ĐỀ THI -->
+      <div id="admin-content-upload" class="block space-y-6">
+        <!-- Edit Mode Notification Banner -->
+        <div id="admin-edit-alert" class="hidden p-4 rounded-2xl bg-blue-50 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div class="flex items-center space-x-2.5 text-blue-900 text-sm font-semibold">
+            <span class="w-3 h-3 rounded-full bg-blue-600 animate-pulse shrink-0"></span>
+            <div>
+              <span>Đang ở chế độ chỉnh sửa: </span>
+              <span id="admin-edit-title-badge" class="font-bold text-blue-950 underline decoration-blue-400">...</span>
+              <span class="text-xs text-blue-700 ml-1 font-mono">(ID: #<span id="admin-edit-id-badge"></span>)</span>
+            </div>
+          </div>
+          <button type="button" onclick="AdminController.cancelEdit()" class="px-3.5 py-1.5 rounded-xl bg-white border border-blue-300 text-blue-700 hover:bg-blue-100 text-xs font-bold transition-all flex items-center space-x-1 shrink-0 shadow-2xs">
+            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <span>Hủy sửa (Tạo đề mới)</span>
+          </button>
+        </div>
+
+        <!-- Sub-methods switcher -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+          
+          <!-- Exam Metadata Info Form -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tên bộ đề thi *</label>
+              <input type="text" id="admin-exam-title" placeholder="VD: Đề thi giữa kỳ Triết học Mác - Lênin 2024" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Môn học / Danh mục *</label>
+              <input type="text" id="admin-exam-category" list="category-datalist" placeholder="VD: Triết học Mác-Lênin" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+              <datalist id="category-datalist">
+                <option value="Triết học Mác-Lênin"></option>
+                <option value="Kinh tế Chính trị"></option>
+                <option value="Toán Cao cấp"></option>
+                <option value="Vật lý Đại cương"></option>
+                <option value="Lịch sử Đảng"></option>
+                <option value="Tiếng Anh"></option>
+                <option value="Tin học đại cương"></option>
+              </datalist>
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Mô tả tóm tắt bộ đề</label>
+              <input type="text" id="admin-exam-desc" placeholder="VD: Trắc nghiệm chương 1 và chương 2, bám sát đề thi chính thức." class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Thời gian (phút)</label>
+                <input type="number" id="admin-exam-duration" value="45" min="5" max="300" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Huy hiệu thẻ</label>
+                <input type="text" id="admin-exam-badge" placeholder="VD: Triết học" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- Method Selector Header -->
+          <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-sm font-bold text-gray-900">Cách nhập câu hỏi:</span>
+              <div class="inline-flex rounded-lg border border-gray-200 p-0.5 bg-gray-50 text-xs">
+                <button type="button" id="method-word-btn" class="px-3 py-1.5 rounded-md font-semibold bg-white text-emerald-700 shadow-xs flex items-center space-x-1.5">
+                  <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm1.8 14.8l-1.3-4.9h-1l-1.3 4.9h-1l-1.8-6.6h1.2l1.1 4.7 1.2-4.7h1.1l1.2 4.7 1.1-4.7h1.2l-1.8 6.6h-1zM13 9V3.5L18.5 9H13z"/>
+                  </svg>
+                  <span>📄 Tải File Word (.docx) Tự Động</span>
+                </button>
+                <button type="button" id="method-text-btn" class="px-3 py-1.5 rounded-md font-semibold text-gray-600 hover:text-gray-900">
+                  ⚡ Dán văn bản (Text / Word copy)
+                </button>
+                <button type="button" id="method-form-btn" class="px-3 py-1.5 rounded-md font-semibold text-gray-600 hover:text-gray-900">
+                  ✍️ Nhập từng câu thủ công
+                </button>
+                <button type="button" id="method-json-btn" class="px-3 py-1.5 rounded-md font-semibold text-gray-600 hover:text-gray-900">
+                  📂 Tải file JSON
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Method 0: WORD FILE UPLOAD & AI PARSER -->
+          <div id="method-word-section" class="block space-y-4">
+            <div id="word-dropzone" class="border-2 border-dashed border-emerald-300 bg-emerald-50/30 rounded-2xl p-8 text-center hover:border-emerald-500 hover:bg-emerald-50/50 transition-all cursor-pointer relative">
+              <input type="file" id="word-file-input" accept=".docx" class="hidden">
+              
+              <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shadow-xs">
+                <svg class="w-9 h-9" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm1.8 14.8l-1.3-4.9h-1l-1.3 4.9h-1l-1.8-6.6h1.2l1.1 4.7 1.2-4.7h1.1l1.2 4.7 1.1-4.7h1.2l-1.8 6.6h-1zM13 9V3.5L18.5 9H13z"/>
+                </svg>
+              </div>
+
+              <h4 class="text-base font-bold text-gray-900 mb-1">
+                Kéo thả file Word (.docx) vào đây hoặc bấm để tải lên
+              </h4>
+              <p class="text-xs text-gray-500 max-w-lg mx-auto mb-4">
+                Hệ thống AI sẽ tự động đọc toàn bộ file Word, phân tích các câu hỏi, 4 phương án A-B-C-D, nhận diện đáp án đúng và lời giải chi tiết.
+              </p>
+
+              <div class="inline-flex flex-wrap items-center justify-center gap-3">
+                <button type="button" id="trigger-word-input-btn" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-sm flex items-center space-x-2 transition-all">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                  </svg>
+                  <span>Chọn File Word Từ Máy Tính (.docx)</span>
+                </button>
+                <a href="/sample_exam.docx" download="de_thi_mau.docx" class="px-4 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-xs sm:text-sm flex items-center space-x-1.5 transition-all">
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                  </svg>
+                  <span>Tải file Word mẫu (.docx)</span>
+                </a>
+              </div>
+
+              <div id="word-selected-badge" class="hidden mt-4 inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-blue-100 text-blue-900 text-xs font-bold">
+                <span id="word-filename-text">de_thi.docx</span>
+                <span class="text-emerald-700 font-semibold">✓ Đã sẵn sàng</span>
+              </div>
+            </div>
+
+            <!-- Loading Spinner during Word processing -->
+            <div id="word-spinner" class="hidden p-6 rounded-2xl bg-white border border-emerald-200 text-center space-y-2">
+              <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+              <p class="text-sm font-bold text-emerald-800">Đang đọc tài liệu Word và AI phân tích câu hỏi...</p>
+              <p class="text-xs text-gray-500">Quá trình này diễn ra chỉ trong vài giây.</p>
+            </div>
+          </div>
+
+          <!-- Method 1: SMART TEXT PARSER -->
+          <div id="method-text-section" class="hidden space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-gray-500">Dán trực tiếp văn bản đề thi từ Word, PDF hoặc Google Docs:</span>
+              <button type="button" id="fill-sample-text-btn" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 underline">
+                Xem mẫu văn bản chuẩn
+              </button>
+            </div>
+            
+            <textarea id="raw-exam-textarea" rows="12" class="w-full p-4 rounded-xl border border-gray-200 font-mono text-xs sm:text-sm bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="Câu 1: Bản chất của nhận thức là gì?&#10;A. Sự phản ánh hiện thực một cách thụ động&#10;B. Sự hồi tưởng lại thế giới ý niệm&#10;C. Quá trình phản ánh tích cực, sáng tạo trên cơ sở thực tiễn&#10;D. Sự phức hợp của các cảm giác&#10;Đáp án: C&#10;Giải thích: Nhận thức là quá trình phản ánh tích cực, sáng tạo..."></textarea>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <button type="button" id="parse-text-btn" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-sm flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                <span>Phân tích văn bản tự động</span>
+              </button>
+
+              <span id="parse-status-text" class="text-xs font-semibold text-gray-500"></span>
+            </div>
+          </div>
+
+          <!-- Method 2: MANUAL FORM BUILDER -->
+          <div id="method-form-section" class="hidden space-y-4">
+            <div id="manual-questions-list" class="space-y-4">
+              <!-- Dynamically added manual questions -->
+            </div>
+            <button type="button" id="add-manual-q-btn" class="w-full py-2.5 border-2 border-dashed border-emerald-300 text-emerald-700 rounded-xl font-semibold text-sm hover:bg-emerald-50 transition-colors flex items-center justify-center space-x-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              <span>Thêm câu hỏi mới</span>
+            </button>
+          </div>
+
+          <!-- Method 3: JSON IMPORT -->
+          <div id="method-json-section" class="hidden space-y-4">
+            <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-emerald-400 transition-colors">
+              <input type="file" id="json-file-input" accept=".json" class="hidden">
+              <svg class="w-10 h-10 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+              </svg>
+              <button type="button" onclick="document.getElementById('json-file-input').click()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700">
+                Chọn file JSON từ máy tính
+              </button>
+              <p class="text-xs text-gray-400 mt-2">Hỗ trợ định dạng JSON đề thi chuẩn UniPrep</p>
+            </div>
+          </div>
+
+          <!-- LIVE PREVIEW & SAVE BUTTON -->
+          <div id="parsed-preview-container" class="hidden mt-8 pt-6 border-t border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-base font-bold text-gray-900 flex items-center space-x-2">
+                <span>Xem trước kết quả phân tích</span>
+                <span id="preview-count-badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">0 câu hỏi</span>
+              </h3>
+              <button type="button" id="save-exam-btn" class="px-6 py-2.5 rounded-xl bg-[#00a86b] hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/20 flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Lưu Bộ Đề Vào Database</span>
+              </button>
+            </div>
+
+            <!-- Preview cards -->
+            <div id="preview-questions-list" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+              <!-- Rendered preview questions -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB CONTENT 2: DANH SÁCH ĐỀ THI -->
+      <div id="admin-content-list" class="hidden space-y-4">
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <h3 class="text-base font-bold text-gray-900">Kho đề thi trong hệ thống</h3>
+            <button id="admin-refresh-list-btn" class="text-xs text-emerald-600 font-semibold hover:underline flex items-center space-x-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              <span>Làm mới danh sách</span>
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <th class="py-3 px-4">ID</th>
+                  <th class="py-3 px-4">Tên đề thi</th>
+                  <th class="py-3 px-4">Danh mục</th>
+                  <th class="py-3 px-4 text-center">Số câu</th>
+                  <th class="py-3 px-4 text-center">Thời gian</th>
+                  <th class="py-3 px-4 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="admin-exams-table-body" class="divide-y divide-gray-100">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT 3: LỊCH SỬ LÀM BÀI -->
+      <div id="admin-content-history" class="hidden space-y-4">
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-gray-200">
+            <h3 class="text-base font-bold text-gray-900">Lịch sử kết quả nộp bài của học viên</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <th class="py-3 px-4">Thời gian</th>
+                  <th class="py-3 px-4">Bộ đề</th>
+                  <th class="py-3 px-4 text-center">Điểm (thang 10)</th>
+                  <th class="py-3 px-4 text-center">Đúng / Sai</th>
+                  <th class="py-3 px-4 text-center">Thời gian làm</th>
+                </tr>
+              </thead>
+              <tbody id="admin-submissions-table-body" class="divide-y divide-gray-100">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL KẾT QUẢ THI (EXACT MATCH OF IMAGE 1) ================= -->
+  <div id="result-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in">
+    <div class="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl relative border border-gray-100 text-center transform transition-all animate-scale-up">
+      
+      <!-- Top Pill & Close Button (Matching Image 1) -->
+      <div class="flex items-center justify-between mb-4">
+        <!-- Green badge pill -->
+        <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#e6f9f0] text-[#00a86b] text-xs font-bold tracking-wide">
+          <svg class="w-4 h-4 text-[#00a86b]" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+          <span>Đã nộp bài hoàn tất</span>
+        </div>
+
+        <!-- Close button 'x' -->
+        <button id="modal-close-btn" class="p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Exam Title -->
+      <h2 id="modal-exam-title" class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight mb-2">
+        Đề thi giữa kỳ Triết học Mác - Lênin 2023
+      </h2>
+
+      <!-- Subtitle -->
+      <p class="text-xs sm:text-sm text-gray-500 mb-6 max-w-md mx-auto leading-relaxed">
+        Hệ thống đã chấm điểm toàn bộ bài thi. Bạn có thể làm lại ngay những câu sai để nắm vững kiến thức!
+      </p>
+
+      <!-- 3 Highlight Stats Cards (Exact Match of Image 1) -->
+      <div class="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
+        
+        <!-- Score Card (Green) -->
+        <div class="p-3 sm:p-4 rounded-2xl bg-[#f0fdf4] border border-[#bbf7d0] text-center flex flex-col justify-center">
+          <div class="text-[11px] sm:text-xs text-gray-600 font-semibold mb-1">Điểm số (thang 10)</div>
+          <div id="modal-score" class="text-2xl sm:text-3xl font-extrabold text-[#00a86b] tracking-tight">
+            4.0
+          </div>
+        </div>
+
+        <!-- Correct Count Card (Teal/Blue) -->
+        <div class="p-3 sm:p-4 rounded-2xl bg-[#f0fdfa] border border-[#ccfbf1] text-center flex flex-col justify-center">
+          <div class="text-[11px] sm:text-xs text-gray-600 font-semibold mb-1">Số câu đúng</div>
+          <div id="modal-correct" class="text-2xl sm:text-3xl font-extrabold text-[#0d9488] tracking-tight">
+            10/25
+          </div>
+        </div>
+
+        <!-- Wrong Count Card (Pink/Red) -->
+        <div class="p-3 sm:p-4 rounded-2xl bg-[#fff1f2] border border-[#fecdd3] text-center flex flex-col justify-center">
+          <div class="text-[11px] sm:text-xs text-gray-600 font-semibold mb-1">Số câu sai</div>
+          <div id="modal-wrong" class="text-2xl sm:text-3xl font-extrabold text-[#e11d48] tracking-tight">
+            3
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons Stack (Exact Match of Image 1) -->
+      <div class="space-y-3">
+        <!-- 1. Red Button: Làm lại câu sai ngay -->
+        <button id="modal-retry-wrong-btn" class="w-full py-3.5 px-4 rounded-2xl bg-[#e11d48] hover:bg-[#be123c] text-white font-bold text-sm sm:text-base flex items-center justify-center space-x-2 shadow-md shadow-rose-600/20 transition-all transform active:scale-[0.98]">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          <span id="modal-retry-wrong-text">Làm lại 3 câu sai ngay</span>
+        </button>
+
+        <!-- 2. Yellow/Cream Button: Làm lại câu sai & chưa làm -->
+        <button id="modal-retry-incomplete-btn" class="w-full py-3.5 px-4 rounded-2xl bg-[#fffbeb] hover:bg-[#fef3c7] text-[#92400e] border border-[#fde68a] font-bold text-sm sm:text-base flex items-center justify-center space-x-2 transition-all transform active:scale-[0.98]">
+          <svg class="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+          </svg>
+          <span id="modal-retry-incomplete-text">Làm lại cả câu sai & câu chưa làm (15 câu)</span>
+        </button>
+
+        <!-- 3. Bottom Row: 2 side-by-side buttons -->
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <!-- Green Button: Xem lại bài & Lời giải AI -->
+          <button id="modal-review-btn" class="w-full py-3 px-3 rounded-2xl bg-[#00a86b] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm flex items-center justify-center shadow-sm transition-all">
+            Xem lại bài & Lời giải AI
+          </button>
+
+          <!-- Light Gray Button: Làm lại cả đề -->
+          <button id="modal-retry-all-btn" class="w-full py-3 px-3 rounded-2xl bg-[#f1f5f9] hover:bg-[#e2e8f0] text-gray-700 font-bold text-xs sm:text-sm transition-all">
+            Làm lại cả đề
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= ADMIN LOGIN MODAL ================= -->
+  <div id="admin-login-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in">
+    <div class="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl relative border border-gray-100 text-left transform transition-all animate-scale-up">
+      <!-- Close button -->
+      <button id="login-modal-close-btn" class="absolute top-5 right-5 p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <!-- Modal Header -->
+      <div class="flex items-center space-x-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-gray-900 tracking-tight">Đăng Nhập Quản Trị</h2>
+          <p class="text-xs text-gray-500">Cần đăng nhập để vào bảng quản trị và tải đề</p>
+        </div>
+      </div>
+
+      <!-- Info Alert Box with Default Credentials -->
+      <div class="mb-5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-start space-x-2">
+        <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+        </svg>
+        <div>
+          <span class="font-bold">Tài khoản quản trị mặc định:</span><br>
+          Tên đăng nhập: <code class="font-mono bg-white px-1 py-0.5 rounded border border-emerald-200 font-bold">admin</code> | Mật khẩu: <code class="font-mono bg-white px-1 py-0.5 rounded border border-emerald-200 font-bold">admin123</code>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <form id="admin-login-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tên đăng nhập *</label>
+          <input type="text" id="login-username" value="admin" required placeholder="Nhập username" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Mật khẩu *</label>
+          <div class="relative">
+            <input type="password" id="login-password" value="admin123" required placeholder="Nhập mật khẩu" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 pr-10">
+            <button type="button" id="login-toggle-pwd-btn" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs">
+          <label class="flex items-center space-x-2 text-gray-600 cursor-pointer">
+            <input type="checkbox" id="login-remember-me" checked class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+            <span>Ghi nhớ đăng nhập</span>
+          </label>
+        </div>
+
+        <div id="login-error-msg" class="hidden p-2.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-semibold"></div>
+
+        <button type="submit" id="login-submit-btn" class="w-full py-3 rounded-xl bg-[#00a86b] hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/20 flex items-center justify-center space-x-2 transition-all">
+          <span>Đăng Nhập Quản Trị</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- Application Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/exam.js"></script>
+  <script src="/js/admin.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

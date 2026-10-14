@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+.npm/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Netlify local build directory
+.netlify/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
