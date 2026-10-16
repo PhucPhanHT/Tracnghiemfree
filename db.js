@@ -47,6 +47,10 @@ if (isPg) {
     } catch (e) {}
   }
 
+  if (connStr && (connStr.includes('[YOUR-PASSWORD]') || connStr.includes('[YOUR_PASSWORD]') || connStr.includes('[MẬT_KHẨU') || connStr.includes('[MAT_KHAU'))) {
+    console.error('❌ LỖI: Bạn chưa thay thế cụm [YOUR-PASSWORD] bằng mật khẩu thật của database Supabase trong biến DATABASE_URL!');
+  }
+
   const isLocal = connStr && (connStr.includes('localhost') || connStr.includes('127.0.0.1'));
   pool = new Pool({
     connectionString: connStr,

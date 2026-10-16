@@ -34,6 +34,11 @@ async function migrate() {
     } catch (e) {}
   }
 
+  if (dbUrl && (dbUrl.includes('[YOUR-PASSWORD]') || dbUrl.includes('[YOUR_PASSWORD]') || dbUrl.includes('[MẬT_KHẨU') || dbUrl.includes('[MAT_KHAU'))) {
+    console.error('❌ Lỗi: Bạn chưa thay thế cụm [YOUR-PASSWORD] bằng mật khẩu thật của database Supabase!');
+    process.exit(1);
+  }
+
   const sqlitePath = path.join(__dirname, 'data', 'uniprep.db');
   if (!fs.existsSync(sqlitePath)) {
     console.error(`❌ Không tìm thấy file SQLite tại: ${sqlitePath}`);
