@@ -26,7 +26,27 @@ let sqliteDb = null;
 
 if (isPg) {
   const { Pool } = require('pg');
-  const connStr = process.env.DATABASE_URL;
+  let connStr = process.env.DATABASE_URL;
+
+  // Supabase direct connection uses IPv6 by default and fails with ENETUNREACH on Render / IPv4-only networks.
+  // Automatically convert to IPv4-compatible transaction pooler:
+  if (connStr && connStr.includes('.supabase.co')) {
+    try {
+      const parsed = new URL(connStr);
+      if (parsed.hostname.startsWith('db.') && parsed.hostname.endsWith('.supabase.co')) {
+        const projectRef = parsed.hostname.split('.')[1];
+        const region = process.env.SUPABASE_REGION || (projectRef === 'mflrfyibkqltrasjvhap' ? 'ap-northeast-1' : 'ap-southeast-1');
+        parsed.hostname = `aws-0-${region}.pooler.supabase.com`;
+        parsed.port = '6543';
+        if (!parsed.username.includes('.')) {
+          parsed.username = `${parsed.username}.${projectRef}`;
+        }
+        connStr = parsed.toString();
+        console.log(`[Supabase IPv4 Adapter] Converted direct connection to pooler: ${parsed.hostname}:6543`);
+      }
+    } catch (e) {}
+  }
+
   const isLocal = connStr && (connStr.includes('localhost') || connStr.includes('127.0.0.1'));
   pool = new Pool({
     connectionString: connStr,

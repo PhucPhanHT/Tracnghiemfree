@@ -9,11 +9,29 @@ const path = require('path');
 const fs = require('fs');
 
 async function migrate() {
-  const dbUrl = process.argv[2] || process.env.DATABASE_URL;
+  let dbUrl = process.argv[2] || process.env.DATABASE_URL;
   if (!dbUrl) {
     console.error('❌ Lỗi: Vui lòng cung cấp URL kết nối PostgreSQL.');
     console.log('Cú pháp: node migrate_to_postgres.js "postgres://user:pass@host:5432/dbname"');
     process.exit(1);
+  }
+
+  // Supabase direct connection uses IPv6 by default. Auto-convert to IPv4 pooler if needed:
+  if (dbUrl.includes('.supabase.co')) {
+    try {
+      const parsed = new URL(dbUrl);
+      if (parsed.hostname.startsWith('db.') && parsed.hostname.endsWith('.supabase.co')) {
+        const projectRef = parsed.hostname.split('.')[1];
+        const region = process.env.SUPABASE_REGION || (projectRef === 'mflrfyibkqltrasjvhap' ? 'ap-northeast-1' : 'ap-southeast-1');
+        parsed.hostname = `aws-0-${region}.pooler.supabase.com`;
+        parsed.port = '6543';
+        if (!parsed.username.includes('.')) {
+          parsed.username = `${parsed.username}.${projectRef}`;
+        }
+        dbUrl = parsed.toString();
+        console.log(`[Supabase IPv4 Adapter] Chuyển đổi sang Transaction Pooler IPv4: ${parsed.hostname}:6543`);
+      }
+    } catch (e) {}
   }
 
   const sqlitePath = path.join(__dirname, 'data', 'uniprep.db');
