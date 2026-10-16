@@ -107,11 +107,31 @@ const API = {
     return res.json();
   },
 
-  async submitExam(id, userAnswers, timeSpentSeconds) {
+  async submitExam(id, userAnswers, timeSpentSeconds, extra = {}) {
     const res = await fetch(`/api/exams/${id}/submit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userAnswers, timeSpentSeconds })
+      body: JSON.stringify({ userAnswers, timeSpentSeconds, ...extra })
+    });
+    return res.json();
+  },
+
+  // On-the-fly combine exams for practice/testing
+  async combineExams(payload) {
+    const res = await fetch('/api/exams/combine', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return res.json();
+  },
+
+  // Admin permanent merge exams
+  async mergeAdminExams(payload) {
+    const res = await fetch('/api/admin/exams/merge', {
+      method: 'POST',
+      headers: this.authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload)
     });
     return res.json();
   },

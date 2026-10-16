@@ -78,7 +78,7 @@ const ExamRunner = {
   },
 
   // Start Exam (Randomizes/shuffles questions every time)
-  startExam(examData, mode = 'test', customQuestions = null) {
+  startExam(examData, mode = 'test', customQuestions = null, customDurationMinutes = null) {
     this.currentExam = examData;
     this.mode = mode;
     this.isReviewMode = false;
@@ -86,6 +86,11 @@ const ExamRunner = {
     this.lastSubmissionResult = null;
     this.timeSpentSeconds = 0;
     this.hiddenAiBoxes.clear();
+
+    const chosenDuration = (customDurationMinutes !== null && customDurationMinutes !== undefined)
+      ? parseInt(customDurationMinutes, 10)
+      : (examData.duration_minutes !== undefined ? parseInt(examData.duration_minutes, 10) : 45);
+    this.durationMinutes = chosenDuration;
 
     // Check toggle state from DOM
     const toggleEl = document.getElementById('toggle-instant-ai');
@@ -131,14 +136,15 @@ const ExamRunner = {
     // Setup Mode Banner
     const modeBadge = document.getElementById('mode-badge');
     const modeDesc = document.getElementById('mode-desc');
+    const durationLabel = chosenDuration === 0 ? 'Không giới hạn thời gian' : `${chosenDuration} phút`;
     if (mode === 'practice') {
       modeBadge.textContent = 'Luyện tập';
       modeBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white';
-      modeDesc.innerHTML = 'Chế độ luyện tập: Chọn đáp án để biết ngay đúng/sai và xem phân tích AI. <span class="ml-1 inline-flex items-center text-xs font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">🔀 Đã tráo câu hỏi</span>';
+      modeDesc.innerHTML = `Chế độ luyện tập: Chọn đáp án để biết ngay đúng/sai và xem phân tích AI. <span class="ml-1 inline-flex items-center text-xs font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">⏱️ ${durationLabel}</span> <span class="ml-1 inline-flex items-center text-xs font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">🔀 Đã tráo câu hỏi</span>`;
     } else {
       modeBadge.textContent = 'Kiểm tra';
       modeBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-600 text-white';
-      modeDesc.innerHTML = 'Thời gian có giới hạn. Nhấn "Nộp bài" khi hoàn thành. <span class="ml-1 inline-flex items-center text-xs font-semibold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full">🔀 Đã tráo câu hỏi</span>';
+      modeDesc.innerHTML = `Thời gian làm bài: <b>${durationLabel}</b>. Nhấn "Nộp bài" khi hoàn thành. <span class="ml-1 inline-flex items-center text-xs font-semibold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full">🔀 Đã tráo câu hỏi</span>`;
     }
 
     // Bind instant AI toggle change
@@ -151,7 +157,7 @@ const ExamRunner = {
     }
 
     // Setup Timer
-    this.initTimer(examData.duration_minutes || 45);
+    this.initTimer(chosenDuration);
 
     // Render questions & palette
     this.renderQuestions();
@@ -162,16 +168,17 @@ const ExamRunner = {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
 
-  // Setup Timer
+  // Setup Timer (supports 0 = unlimited / tự do)
   initTimer(durationMinutes) {
     if (this.timerInterval) clearInterval(this.timerInterval);
 
+    this.isUnlimited = (durationMinutes === 0);
     this.remainingSeconds = durationMinutes * 60;
     this.updateTimerDisplay();
 
     this.timerInterval = setInterval(() => {
       this.timeSpentSeconds++;
-      if (this.mode === 'test') {
+      if (this.mode === 'test' && !this.isUnlimited) {
         this.remainingSeconds--;
         this.updateTimerDisplay();
 
@@ -180,8 +187,27 @@ const ExamRunner = {
           showToast('Hết giờ làm bài! Hệ thống đang tự động nộp bài...', 'info');
           this.submitExam();
         }
+      } else {
+        this.updateTimerDisplay();
       }
     }, 1000);
+  },
+
+  // Add more time during exam (+5, +10, +15 mins)
+  addExtraTime(minutes) {
+    if (this.isUnlimited) {
+      showToast('Đang ở chế độ Không giới hạn thời gian làm bài.', 'info');
+      return;
+    }
+    this.remainingSeconds += minutes * 60;
+    this.updateTimerDisplay();
+    showToast(`⏱️ Đã cộng thêm +${minutes} phút vào thời gian làm bài!`, 'success');
+  },
+
+  setUnlimitedTime() {
+    this.isUnlimited = true;
+    this.updateTimerDisplay();
+    showToast('⏱️ Đã chuyển sang chế độ Không giới hạn thời gian!', 'info');
   },
 
   updateTimerDisplay() {
@@ -189,11 +215,14 @@ const ExamRunner = {
     const timerContainer = document.getElementById('nav-timer');
     if (!timerText) return;
 
-    if (this.mode === 'practice') {
+    if (this.isUnlimited || this.mode === 'practice') {
       const mins = Math.floor(this.timeSpentSeconds / 60);
       const secs = this.timeSpentSeconds % 60;
-      timerText.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-      if (timerContainer) timerContainer.classList.remove('bg-rose-100', 'text-rose-700');
+      timerText.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}${this.isUnlimited ? ' (Tự do)' : ''}`;
+      if (timerContainer) {
+        timerContainer.classList.remove('bg-rose-100', 'text-rose-700');
+        timerContainer.classList.add('bg-gray-100', 'text-gray-700');
+      }
       return;
     }
 
@@ -729,21 +758,88 @@ const ExamRunner = {
     if (this.timerInterval) clearInterval(this.timerInterval);
 
     try {
+      const isVirtual = this.currentExam.id === 'combined' || this.currentExam.isVirtual;
       const res = await API.submitExam(
         this.currentExam.id,
         this.userAnswers,
-        this.timeSpentSeconds
+        this.timeSpentSeconds,
+        isVirtual ? {
+          virtualExamTitle: this.currentExam.title,
+          questionsList: this.activeQuestions
+        } : {}
       );
 
-      if (res.success) {
+      if (res && res.success) {
         this.lastSubmissionResult = res.data;
         this.showResultModal(res.data);
       } else {
-        showToast(res.error || 'Có lỗi khi nộp bài', 'error');
+        this.gradeExamLocally();
       }
     } catch (err) {
-      showToast('Lỗi máy chủ: ' + err.message, 'error');
+      this.gradeExamLocally();
     }
+  },
+
+  // Fallback local grading for virtual / combined exams or offline
+  gradeExamLocally() {
+    let correctCount = 0;
+    let wrongCount = 0;
+    let unansweredCount = 0;
+    const wrongQuestionNumbers = [];
+    const unansweredQuestionNumbers = [];
+    const wrongQuestionIds = [];
+    const unansweredQuestionIds = [];
+    const questionResults = [];
+
+    this.activeQuestions.forEach(q => {
+      const studentAns = this.userAnswers[q.id] || this.userAnswers[String(q.id)] || this.userAnswers[q.display_number];
+      const isAnswered = Boolean(studentAns);
+      const isCorrect = isAnswered && studentAns.toUpperCase() === q.correct_answer.toUpperCase();
+
+      if (!isAnswered) {
+        unansweredCount++;
+        unansweredQuestionIds.push(q.id);
+        unansweredQuestionNumbers.push(q.display_number);
+      } else if (isCorrect) {
+        correctCount++;
+      } else {
+        wrongCount++;
+        wrongQuestionIds.push(q.id);
+        wrongQuestionNumbers.push(q.display_number);
+      }
+
+      questionResults.push({
+        id: q.id,
+        question_number: q.display_number,
+        studentAnswer: studentAns || null,
+        correctAnswer: q.correct_answer,
+        isCorrect,
+        isAnswered,
+        explanation: q.explanation || 'Không có giải thích chi tiết.'
+      });
+    });
+
+    const totalQuestions = this.activeQuestions.length;
+    const rawScore = totalQuestions > 0 ? (correctCount / totalQuestions) * 10 : 0;
+    const score = (Math.round(rawScore * 10) / 10).toFixed(1);
+
+    const data = {
+      examId: this.currentExam.id,
+      examTitle: this.currentExam.title,
+      score,
+      totalQuestions,
+      correctCount,
+      wrongCount,
+      unansweredCount,
+      wrongQuestionNumbers,
+      unansweredQuestionNumbers,
+      wrongQuestionIds,
+      unansweredQuestionIds,
+      questionResults
+    };
+
+    this.lastSubmissionResult = data;
+    this.showResultModal(data);
   },
 
   // Show Result Modal

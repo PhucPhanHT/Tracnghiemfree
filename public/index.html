@@ -117,12 +117,36 @@
             <span>🔀 Tráo câu</span>
           </button>
 
-          <!-- Timer Display -->
-          <div id="nav-timer" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 font-mono text-sm font-semibold">
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <span id="nav-timer-text">45:00</span>
+          <!-- Timer Display with Quick Adjust Dropdown -->
+          <div class="relative">
+            <button type="button" id="nav-timer" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-mono text-sm font-semibold cursor-pointer transition-colors shadow-2xs" title="Bấm để điều chỉnh thêm/bớt thời gian làm bài">
+              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span id="nav-timer-text">45:00</span>
+              <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+
+            <!-- Timer Dropdown Popover -->
+            <div id="nav-timer-dropdown" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 z-50">
+              <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">⏱️ Điều chỉnh giờ</div>
+              <div class="space-y-1.5 text-xs font-semibold">
+                <button type="button" onclick="ExamRunner.addExtraTime(5); document.getElementById('nav-timer-dropdown').classList.add('hidden');" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 hover:text-emerald-700 text-gray-700 flex items-center justify-between transition-colors">
+                  <span>+5 phút</span>
+                  <span class="text-emerald-600 font-bold">+300s</span>
+                </button>
+                <button type="button" onclick="ExamRunner.addExtraTime(15); document.getElementById('nav-timer-dropdown').classList.add('hidden');" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 hover:text-emerald-700 text-gray-700 flex items-center justify-between transition-colors">
+                  <span>+15 phút</span>
+                  <span class="text-emerald-600 font-bold">+900s</span>
+                </button>
+                <button type="button" onclick="ExamRunner.setUnlimitedTime(); document.getElementById('nav-timer-dropdown').classList.add('hidden');" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-700 text-gray-700 flex items-center justify-between transition-colors">
+                  <span>Không giới hạn</span>
+                  <span class="text-blue-600 font-bold">∞ Tự do</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Nộp bài Button (exact match of Image 2) -->
@@ -164,22 +188,32 @@
         <p class="mt-1 text-gray-500 text-sm sm:text-base">Lựa chọn bộ đề phù hợp để bắt đầu luyện tập hoặc kiểm tra ngay.</p>
       </div>
 
-      <!-- Categories Filter Pills Bar & Search -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <!-- Categories Filter Pills Bar, Search & Gộp Đề Button -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
         <!-- Category Pills (matching screenshot 3) -->
-        <div id="category-pills" class="flex flex-wrap items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        <div id="category-pills" class="flex flex-wrap items-center gap-2 overflow-x-auto pb-2 scrollbar-none flex-grow">
           <!-- Filled dynamically by JavaScript -->
           <button class="cat-pill active px-4 py-2 rounded-full text-sm font-semibold bg-[#00a86b] text-white transition-all shadow-sm">
             Tất cả
           </button>
         </div>
 
-        <!-- Search Box -->
-        <div class="relative min-w-[240px] max-w-xs w-full">
-          <input type="text" id="exam-search-input" placeholder="Tìm kiếm bộ đề..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-          <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
+        <div class="flex items-center space-x-2.5 shrink-0">
+          <!-- Search Box -->
+          <div class="relative min-w-[200px] max-w-xs w-full">
+            <input type="text" id="exam-search-input" placeholder="Tìm kiếm bộ đề..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+
+          <!-- Nút Gộp Đề Cho Học Viên -->
+          <button id="open-combine-modal-btn" type="button" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 flex items-center space-x-1.5 transition-all shrink-0 cursor-pointer" title="Gộp nhiều bộ đề để luyện tập hoặc kiểm tra theo ý muốn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+            </svg>
+            <span>🔀 Gộp đề thi</span>
+          </button>
         </div>
       </div>
 
@@ -380,14 +414,17 @@
       </div>
 
       <!-- Admin Tabs Navigation -->
-      <div class="flex items-center space-x-2 border-b border-gray-200 mb-6">
-        <button id="admin-tab-upload-btn" class="admin-tab-btn active px-4 py-2.5 text-sm font-bold border-b-2 border-emerald-600 text-emerald-700">
+      <div class="flex items-center space-x-2 border-b border-gray-200 mb-6 overflow-x-auto">
+        <button id="admin-tab-upload-btn" class="admin-tab-btn active px-4 py-2.5 text-sm font-bold border-b-2 border-emerald-600 text-emerald-700 whitespace-nowrap">
           Tải Lên / Tạo Đề Thi Mới
         </button>
-        <button id="admin-tab-list-btn" class="admin-tab-btn px-4 py-2.5 text-sm font-bold border-b-2 border-transparent text-gray-500 hover:text-gray-800">
+        <button id="admin-tab-list-btn" class="admin-tab-btn px-4 py-2.5 text-sm font-bold border-b-2 border-transparent text-gray-500 hover:text-gray-800 whitespace-nowrap">
           Danh Sách Đề Thi
         </button>
-        <button id="admin-tab-history-btn" class="admin-tab-btn px-4 py-2.5 text-sm font-bold border-b-2 border-transparent text-gray-500 hover:text-gray-800">
+        <button id="admin-tab-merge-btn" class="admin-tab-btn px-4 py-2.5 text-sm font-bold border-b-2 border-transparent text-gray-500 hover:text-gray-800 whitespace-nowrap flex items-center space-x-1">
+          <span>🔀 Gộp Nhiều Đề Thi</span>
+        </button>
+        <button id="admin-tab-history-btn" class="admin-tab-btn px-4 py-2.5 text-sm font-bold border-b-2 border-transparent text-gray-500 hover:text-gray-800 whitespace-nowrap">
           Lịch Sử Làm Bài
         </button>
       </div>
@@ -599,8 +636,19 @@
       <div id="admin-content-list" class="hidden space-y-4">
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <h3 class="text-base font-bold text-gray-900">Kho đề thi trong hệ thống</h3>
-            <button id="admin-refresh-list-btn" class="text-xs text-emerald-600 font-semibold hover:underline flex items-center space-x-1">
+            <div class="flex items-center space-x-3">
+              <h3 class="text-base font-bold text-gray-900">Kho đề thi trong hệ thống</h3>
+              <!-- Batch Actions Button (when checkboxes selected) -->
+              <div id="admin-batch-actions" class="hidden items-center space-x-2">
+                <span class="text-xs text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                  Đã chọn: <b id="admin-batch-count">0</b> đề
+                </span>
+                <button type="button" id="admin-batch-merge-btn" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs flex items-center space-x-1 transition-all cursor-pointer">
+                  <span>🔀 Gộp các đề đã chọn</span>
+                </button>
+              </div>
+            </div>
+            <button id="admin-refresh-list-btn" class="text-xs text-emerald-600 font-semibold hover:underline flex items-center space-x-1 cursor-pointer">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
               </svg>
@@ -612,7 +660,10 @@
             <table class="w-full text-left border-collapse text-sm">
               <thead>
                 <tr class="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  <th class="py-3 px-4">ID</th>
+                  <th class="py-3 px-3 text-center w-10">
+                    <input type="checkbox" id="admin-select-all-exams" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer w-4 h-4" title="Chọn tất cả">
+                  </th>
+                  <th class="py-3 px-3">ID</th>
                   <th class="py-3 px-4">Tên đề thi</th>
                   <th class="py-3 px-4">Danh mục</th>
                   <th class="py-3 px-4 text-center">Số câu</th>
@@ -625,6 +676,133 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT 4: GỘP ĐỀ THI (ADMIN) -->
+      <div id="admin-content-merge" class="hidden space-y-6">
+        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+          <div class="mb-5 pb-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-gray-900 flex items-center space-x-2">
+                <span>🔀 Gộp Nhiều Bộ Đề Thành Đề Thi Mới</span>
+              </h3>
+              <p class="text-xs text-gray-500 mt-0.5">Chọn ít nhất 2 bộ đề, thiết lập thời gian và tùy chọn để tạo bộ đề tổng hợp lưu vĩnh viễn vào Database.</p>
+            </div>
+            <!-- Quick Category Filter for Exam Selection -->
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-semibold text-gray-500">Lọc danh mục:</span>
+              <select id="admin-merge-cat-filter" class="px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-semibold bg-gray-50 focus:ring-1 focus:ring-emerald-500">
+                <option value="all">Tất cả danh mục</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Step 1: Chọn các đề thi cần gộp -->
+          <div class="mb-6">
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center space-x-2">
+                <span>1. Chọn các bộ đề muốn gộp *</span>
+                <span id="admin-merge-selected-summary" class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full text-2xs border border-emerald-200">Đã chọn: 0 đề (0 câu)</span>
+              </label>
+              <div class="space-x-2 text-xs">
+                <button type="button" id="admin-merge-select-all-btn" class="text-emerald-600 font-bold hover:underline cursor-pointer">Chọn tất cả</button>
+                <span class="text-gray-300">|</span>
+                <button type="button" id="admin-merge-deselect-all-btn" class="text-gray-500 font-bold hover:underline cursor-pointer">Bỏ chọn</button>
+              </div>
+            </div>
+
+            <!-- Scrollable Exam Checkboxes Container -->
+            <div id="admin-merge-exams-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+              <!-- Dynamically rendered -->
+            </div>
+          </div>
+
+          <!-- Step 2: Cấu hình đề gộp mới -->
+          <div class="border-t border-gray-100 pt-5">
+            <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-4">2. Thiết lập thông tin cho đề thi gộp mới</h4>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div class="md:col-span-2">
+                <label class="block text-xs font-bold text-gray-700 mb-1">Tên đề thi mới *</label>
+                <input type="text" id="admin-merge-title" placeholder="VD: Đề thi tổng hợp QPAN Học phần 1" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Môn học / Danh mục *</label>
+                <input type="text" id="admin-merge-category" placeholder="VD: Quân sự QPAN - HP1" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div class="md:col-span-2">
+                <label class="block text-xs font-bold text-gray-700 mb-1">Mô tả tóm tắt</label>
+                <input type="text" id="admin-merge-desc" placeholder="VD: Tổng hợp các câu hỏi trọng tâm từ các bài đã chọn." class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Huy hiệu thẻ (Badge)</label>
+                <input type="text" id="admin-merge-badge" value="Tổng hợp" placeholder="VD: Tổng hợp" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+              </div>
+            </div>
+
+            <!-- THỜI GIAN LÀM BÀI CHO ĐỀ GỘP -->
+            <div class="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 mb-5">
+              <label class="block text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">⏱️ Chọn thời gian làm bài cho đề gộp *</label>
+              
+              <!-- Quick Duration Pills -->
+              <div class="flex flex-wrap items-center gap-2 mb-3" id="admin-merge-dur-pills">
+                <button type="button" class="merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="15">15 phút</button>
+                <button type="button" class="merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="30">30 phút</button>
+                <button type="button" class="merge-dur-btn active px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition-all shadow-2xs cursor-pointer" data-mins="45">45 phút</button>
+                <button type="button" class="merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="60">60 phút</button>
+                <button type="button" class="merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="90">90 phút</button>
+                <button type="button" class="merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="120">120 phút</button>
+              </div>
+
+              <div class="flex items-center space-x-2 max-w-xs">
+                <span class="text-xs text-gray-600 font-medium">Hoặc tự nhập:</span>
+                <input type="number" id="admin-merge-duration" value="45" min="5" max="360" class="w-24 px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-bold bg-white text-center focus:ring-1 focus:ring-emerald-500">
+                <span class="text-xs text-gray-500 font-semibold">phút</span>
+              </div>
+            </div>
+
+            <!-- Tùy chọn nâng cao: Lọc số câu, khử trùng lặp, tráo ngẫu nhiên -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 p-4 rounded-xl bg-gray-50 border border-gray-200 text-xs">
+              <div>
+                <label class="block font-bold text-gray-700 mb-1">Số câu muốn lấy:</label>
+                <select id="admin-merge-max-q" class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white font-semibold focus:ring-1 focus:ring-emerald-500">
+                  <option value="0">Tất cả câu hỏi</option>
+                  <option value="20">Ngẫu nhiên 20 câu</option>
+                  <option value="30">Ngẫu nhiên 30 câu</option>
+                  <option value="40">Ngẫu nhiên 40 câu</option>
+                  <option value="50">Ngẫu nhiên 50 câu</option>
+                  <option value="60">Ngẫu nhiên 60 câu</option>
+                  <option value="80">Ngẫu nhiên 80 câu</option>
+                  <option value="100">Ngẫu nhiên 100 câu</option>
+                </select>
+              </div>
+
+              <div class="flex items-center space-x-2 pt-4">
+                <input type="checkbox" id="admin-merge-dedup" checked class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer">
+                <label for="admin-merge-dedup" class="font-bold text-gray-700 cursor-pointer">Loại bỏ câu hỏi trùng lặp</label>
+              </div>
+
+              <div class="flex items-center space-x-2 pt-4">
+                <input type="checkbox" id="admin-merge-shuffle" checked class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer">
+                <label for="admin-merge-shuffle" class="font-bold text-gray-700 cursor-pointer">Tráo ngẫu nhiên câu hỏi</label>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="flex items-center justify-end space-x-3">
+              <button type="button" id="admin-merge-submit-btn" class="px-6 py-2.5 rounded-xl bg-[#00a86b] hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/20 flex items-center space-x-2 transition-all cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                </svg>
+                <span>Tạo Đề Gộp & Lưu Vào Database</span>
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -873,6 +1051,191 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal Gộp Đề Cho Học Viên (Thi / Luyện tập nhiều đề cùng lúc) -->
+  <div id="modal-combine-exam" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in">
+    <div class="bg-white w-full max-w-2xl rounded-3xl p-6 sm:p-7 shadow-2xl relative border border-gray-100 text-left transform transition-all animate-scale-up max-h-[90vh] flex flex-col">
+      <!-- Close button -->
+      <button id="combine-modal-close-btn" type="button" class="absolute top-5 right-5 p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <!-- Modal Header -->
+      <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-gray-100">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-xl font-extrabold text-gray-900 tracking-tight">Tùy Chọn Thi & Luyện Tập Gộp Đề</h2>
+          <p class="text-xs text-gray-500">Gộp nhiều bài học thành 1 phiên luyện thi tổng hợp với thời gian tùy chỉnh.</p>
+        </div>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="overflow-y-auto pr-1 flex-grow space-y-5">
+        <!-- 1. Danh sách chọn đề -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center space-x-2">
+              <span>1. Chọn các bộ đề muốn gộp *</span>
+              <span id="combine-selected-badge" class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full text-2xs border border-emerald-200">Đã chọn: 0 đề (0 câu)</span>
+            </label>
+            <div class="flex items-center space-x-2 text-xs">
+              <button type="button" id="combine-select-all-btn" class="text-emerald-600 font-bold hover:underline cursor-pointer">Chọn tất cả</button>
+              <span class="text-gray-300">|</span>
+              <button type="button" id="combine-deselect-all-btn" class="text-gray-500 font-bold hover:underline cursor-pointer">Bỏ chọn</button>
+            </div>
+          </div>
+
+          <!-- Lọc danh mục -->
+          <div class="mb-2 flex items-center space-x-2">
+            <span class="text-xs text-gray-500 font-medium">Lọc danh mục:</span>
+            <select id="combine-category-filter" class="px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-semibold bg-gray-50 focus:ring-1 focus:ring-emerald-500">
+              <option value="all">Tất cả danh mục</option>
+            </select>
+          </div>
+
+          <!-- Checkbox list of exams -->
+          <div id="combine-exams-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2.5 rounded-2xl border border-gray-200 bg-gray-50/50">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- 2. CHỌN THỜI GIAN LÀM BÀI -->
+        <div class="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100">
+          <label class="block text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">
+            ⏱️ 2. Chọn thời gian làm bài *
+          </label>
+          
+          <div class="flex flex-wrap items-center gap-2 mb-2.5" id="combine-dur-pills">
+            <button type="button" class="user-dur-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="15">15 phút</button>
+            <button type="button" class="user-dur-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="30">30 phút</button>
+            <button type="button" class="user-dur-btn active px-3.5 py-1.5 rounded-xl text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition-all shadow-2xs cursor-pointer" data-mins="45">45 phút</button>
+            <button type="button" class="user-dur-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="60">60 phút</button>
+            <button type="button" class="user-dur-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="90">90 phút</button>
+            <button type="button" class="user-dur-btn px-3.5 py-1.5 rounded-xl text-xs font-bold border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all cursor-pointer" data-mins="0">∞ Không giới hạn</button>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <span class="text-xs text-gray-600 font-medium">Hoặc tùy chỉnh số phút:</span>
+            <input type="number" id="combine-custom-duration" value="45" min="0" max="360" class="w-20 px-2.5 py-1 rounded-lg border border-gray-300 text-xs font-bold bg-white text-center focus:ring-1 focus:ring-emerald-500">
+            <span class="text-xs text-gray-500 font-semibold">(0 = không giới hạn giờ)</span>
+          </div>
+        </div>
+
+        <!-- 3. Tùy chọn số lượng câu & Chế độ thi -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">3. Số lượng câu hỏi</label>
+            <select id="combine-max-questions" class="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-semibold focus:ring-1 focus:ring-emerald-500">
+              <option value="0">Tất cả câu hỏi từ các đề đã chọn</option>
+              <option value="20">Ngẫu nhiên 20 câu</option>
+              <option value="30">Ngẫu nhiên 30 câu</option>
+              <option value="40">Ngẫu nhiên 40 câu</option>
+              <option value="50">Ngẫu nhiên 50 câu</option>
+              <option value="60">Ngẫu nhiên 60 câu</option>
+              <option value="80">Ngẫu nhiên 80 câu</option>
+              <option value="100">Ngẫu nhiên 100 câu</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">4. Chế độ làm bài</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="flex items-center space-x-2 p-2 rounded-xl border border-gray-200 bg-white cursor-pointer hover:border-emerald-500 transition-colors">
+                <input type="radio" name="combine_mode" value="practice" checked class="text-emerald-600 focus:ring-emerald-500">
+                <span class="text-xs font-bold text-gray-800">Luyện tập (AI)</span>
+              </label>
+              <label class="flex items-center space-x-2 p-2 rounded-xl border border-gray-200 bg-white cursor-pointer hover:border-blue-500 transition-colors">
+                <input type="radio" name="combine_mode" value="test" class="text-blue-600 focus:ring-blue-500">
+                <span class="text-xs font-bold text-gray-800">Kiểm tra</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-4 mt-4 border-t border-gray-100 flex items-center justify-between">
+        <button type="button" id="combine-modal-cancel-btn" class="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold text-xs sm:text-sm hover:bg-gray-50 transition-all cursor-pointer">
+          Hủy bỏ
+        </button>
+        <button type="button" id="combine-start-btn" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 flex items-center space-x-2 transition-all cursor-pointer">
+          <span>Bắt đầu làm bài ngay 🚀</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Tùy Chọn Thời Gian Trước Khi Vào Thi Đề Bất Kỳ -->
+  <div id="modal-start-exam" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in">
+    <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative border border-gray-100 text-left transform transition-all animate-scale-up">
+      <!-- Close button -->
+      <button id="start-exam-modal-close-btn" type="button" class="absolute top-5 right-5 p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <!-- Exam Info Header -->
+      <div class="flex items-center space-x-3 mb-4">
+        <div id="start-exam-icon" class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <span id="start-exam-badge" class="px-2 py-0.5 rounded-md text-2xs font-bold bg-emerald-100 text-emerald-800">Trắc nghiệm</span>
+          <h3 id="start-exam-title" class="text-base font-bold text-gray-900 tracking-tight leading-snug line-clamp-2 mt-0.5">Tên đề thi</h3>
+        </div>
+      </div>
+
+      <div class="p-3 rounded-2xl bg-gray-50 border border-gray-100 text-xs text-gray-600 space-y-1 mb-4">
+        <div class="flex items-center justify-between">
+          <span>Số lượng câu hỏi:</span>
+          <b id="start-exam-qcount" class="text-gray-900 font-bold">40 câu</b>
+        </div>
+        <div class="flex items-center justify-between">
+          <span>Thời gian chuẩn của đề:</span>
+          <b id="start-exam-default-duration" class="text-gray-900 font-bold">45 phút</b>
+        </div>
+      </div>
+
+      <!-- CHỌN THỜI GIAN LÀM BÀI -->
+      <div class="mb-4">
+        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">⏱️ Chọn thời gian cho phiên thi này</label>
+        
+        <div class="flex flex-wrap items-center gap-1.5 mb-2.5" id="start-exam-dur-pills">
+          <button type="button" class="start-dur-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="15">15p</button>
+          <button type="button" class="start-dur-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="30">30p</button>
+          <button type="button" class="start-dur-btn active px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition-all shadow-2xs cursor-pointer" data-mins="45" id="start-dur-default-btn">45p</button>
+          <button type="button" class="start-dur-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="60">60p</button>
+          <button type="button" class="start-dur-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="90">90p</button>
+          <button type="button" class="start-dur-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all cursor-pointer" data-mins="0">∞ Tự do</button>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <span class="text-xs text-gray-600">Hoặc tự nhập:</span>
+          <input type="number" id="start-exam-custom-mins" value="45" min="0" max="360" class="w-16 px-2 py-1 rounded-lg border border-gray-300 text-xs font-bold text-center bg-white focus:ring-1 focus:ring-emerald-500">
+          <span class="text-xs text-gray-500">phút (0 = không giới hạn)</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-2 flex items-center space-x-3">
+        <button type="button" id="start-exam-cancel-btn" class="w-1/3 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold text-xs sm:text-sm hover:bg-gray-50 transition-all cursor-pointer">
+          Hủy bỏ
+        </button>
+        <button type="button" id="start-exam-confirm-btn" class="w-2/3 py-2.5 rounded-xl bg-[#00a86b] hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 flex items-center justify-center space-x-2 transition-all cursor-pointer">
+          <span>Vào phòng thi ngay 🎯</span>
+        </button>
+      </div>
     </div>
   </div>
 

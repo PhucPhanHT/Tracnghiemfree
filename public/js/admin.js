@@ -16,10 +16,12 @@ const AdminController = {
     // Admin Top Tab switching
     const tabUploadBtn = document.getElementById('admin-tab-upload-btn');
     const tabListBtn = document.getElementById('admin-tab-list-btn');
+    const tabMergeBtn = document.getElementById('admin-tab-merge-btn');
     const tabHistoryBtn = document.getElementById('admin-tab-history-btn');
 
     tabUploadBtn?.addEventListener('click', () => this.switchTab('upload'));
     tabListBtn?.addEventListener('click', () => this.switchTab('list'));
+    tabMergeBtn?.addEventListener('click', () => this.switchTab('merge'));
     tabHistoryBtn?.addEventListener('click', () => this.switchTab('history'));
 
     // Upload method buttons
@@ -130,6 +132,85 @@ const AdminController = {
       if (pwdInput) {
         pwdInput.type = pwdInput.type === 'password' ? 'text' : 'password';
       }
+    });
+
+    // Admin List Batch Selection
+    document.getElementById('admin-select-all-exams')?.addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      const rowCbs = document.querySelectorAll('.admin-exam-row-cb');
+      rowCbs.forEach(cb => cb.checked = checked);
+      this.updateAdminBatchToolbar();
+    });
+
+    document.getElementById('admin-batch-merge-btn')?.addEventListener('click', () => {
+      const checkedBoxes = Array.from(document.querySelectorAll('.admin-exam-row-cb:checked'));
+      const ids = checkedBoxes.map(cb => parseInt(cb.value, 10));
+      if (ids.length < 2) {
+        showToast('Vui lòng chọn ít nhất 2 bộ đề để gộp!', 'error');
+        return;
+      }
+      this.switchTab('merge');
+      this.loadMergeExams(ids);
+    });
+
+    // Admin Merge Tab Category Filter
+    document.getElementById('admin-merge-cat-filter')?.addEventListener('change', (e) => {
+      const cat = e.target.value;
+      const items = document.querySelectorAll('.admin-merge-item');
+      items.forEach(item => {
+        if (cat === 'all' || item.dataset.cat === cat) {
+          item.classList.remove('hidden');
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+    });
+
+    // Admin Merge Select All / Deselect All
+    document.getElementById('admin-merge-select-all-btn')?.addEventListener('click', () => {
+      const visibleCbs = document.querySelectorAll('.admin-merge-item:not(.hidden) .admin-merge-cb');
+      visibleCbs.forEach(cb => cb.checked = true);
+      this.updateMergeSelectedSummary();
+    });
+
+    document.getElementById('admin-merge-deselect-all-btn')?.addEventListener('click', () => {
+      const cbs = document.querySelectorAll('.admin-merge-cb');
+      cbs.forEach(cb => cb.checked = false);
+      this.updateMergeSelectedSummary();
+    });
+
+    // Admin Merge Duration Pills
+    const adminMergeDurPills = document.querySelectorAll('.merge-dur-btn');
+    adminMergeDurPills.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mins = btn.dataset.mins;
+        const input = document.getElementById('admin-merge-duration');
+        if (input) input.value = mins;
+
+        adminMergeDurPills.forEach(p => {
+          if (p === btn) {
+            p.className = 'merge-dur-btn active px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition-all shadow-2xs cursor-pointer';
+          } else {
+            p.className = 'merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer';
+          }
+        });
+      });
+    });
+
+    document.getElementById('admin-merge-duration')?.addEventListener('input', (e) => {
+      const val = e.target.value;
+      adminMergeDurPills.forEach(p => {
+        if (p.dataset.mins === val) {
+          p.className = 'merge-dur-btn active px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition-all shadow-2xs cursor-pointer';
+        } else {
+          p.className = 'merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer';
+        }
+      });
+    });
+
+    // Admin Merge Submit Button
+    document.getElementById('admin-merge-submit-btn')?.addEventListener('click', () => {
+      this.handleMergeExams();
     });
   },
 
@@ -350,7 +431,7 @@ const AdminController = {
   },
 
   switchTab(tab) {
-    const tabs = ['upload', 'list', 'history'];
+    const tabs = ['upload', 'list', 'merge', 'history'];
     tabs.forEach(t => {
       const btn = document.getElementById(`admin-tab-${t}-btn`);
       const content = document.getElementById(`admin-content-${t}`);
@@ -366,6 +447,7 @@ const AdminController = {
     });
 
     if (tab === 'list') this.loadExamsTable();
+    if (tab === 'merge') this.loadMergeExams();
     if (tab === 'history') this.loadSubmissionsTable();
   },
 
@@ -948,10 +1030,38 @@ Giải thích: Quy luật mâu thuẫn (thống nhất và đấu tranh giữa c
     showToast('Đã hủy chế độ sửa, quay về tạo đề mới.', 'info');
   },
 
+  // Update Batch Toolbar in Exam List Tab
+  updateAdminBatchToolbar() {
+    const checkedBoxes = Array.from(document.querySelectorAll('.admin-exam-row-cb:checked'));
+    const toolbar = document.getElementById('admin-batch-actions');
+    const countEl = document.getElementById('admin-batch-count');
+    const selectAllCb = document.getElementById('admin-select-all-exams');
+
+    if (countEl) countEl.textContent = checkedBoxes.length;
+
+    if (checkedBoxes.length >= 2) {
+      toolbar?.classList.remove('hidden');
+      toolbar?.classList.add('flex');
+    } else {
+      toolbar?.classList.add('hidden');
+      toolbar?.classList.remove('flex');
+    }
+
+    const allRowCbs = document.querySelectorAll('.admin-exam-row-cb');
+    if (selectAllCb && allRowCbs.length > 0) {
+      selectAllCb.checked = checkedBoxes.length === allRowCbs.length;
+    }
+  },
+
   // Load Exams Table
   async loadExamsTable() {
     const tbody = document.getElementById('admin-exams-table-body');
     if (!tbody) return;
+
+    // Reset batch toolbar
+    const selectAllCb = document.getElementById('admin-select-all-exams');
+    if (selectAllCb) selectAllCb.checked = false;
+    this.updateAdminBatchToolbar();
 
     try {
       const res = await API.getExams();
@@ -959,7 +1069,7 @@ Giải thích: Quy luật mâu thuẫn (thống nhất và đấu tranh giữa c
 
       tbody.innerHTML = '';
       if (res.data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500">Chưa có đề thi nào trong cơ sở dữ liệu.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-500">Chưa có đề thi nào trong cơ sở dữ liệu.</td></tr>`;
         return;
       }
 
@@ -968,7 +1078,10 @@ Giải thích: Quy luật mâu thuẫn (thống nhất và đấu tranh giữa c
         tr.className = 'hover:bg-gray-50 transition-colors';
 
         tr.innerHTML = `
-          <td class="py-3 px-4 font-mono text-xs text-gray-500">#${exam.id}</td>
+          <td class="py-3 px-3 text-center">
+            <input type="checkbox" value="${exam.id}" data-qcount="${exam.question_count}" data-title="${exam.title.replace(/"/g, '&quot;')}" class="admin-exam-row-cb rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer w-4 h-4">
+          </td>
+          <td class="py-3 px-3 font-mono text-xs text-gray-500">#${exam.id}</td>
           <td class="py-3 px-4">
             <div class="font-bold text-gray-900">${exam.title}</div>
             <div class="text-xs text-gray-400 line-clamp-1">${exam.description || 'Không có mô tả'}</div>
@@ -996,10 +1109,180 @@ Giải thích: Quy luật mâu thuẫn (thống nhất và đấu tranh giữa c
           </td>
         `;
 
+        const rowCb = tr.querySelector('.admin-exam-row-cb');
+        rowCb.addEventListener('change', () => this.updateAdminBatchToolbar());
+
         tbody.appendChild(tr);
       });
     } catch (err) {
       console.error('Failed to load exams table:', err);
+    }
+  },
+
+  // Load Admin Merge Tab Exams
+  async loadMergeExams(preselectedIds = []) {
+    const listEl = document.getElementById('admin-merge-exams-list');
+    const catFilter = document.getElementById('admin-merge-cat-filter');
+    if (!listEl) return;
+
+    listEl.innerHTML = '<div class="col-span-full text-center py-6 text-gray-500 text-xs">Đang tải danh sách đề thi...</div>';
+
+    try {
+      const res = await API.getExams();
+      if (!res.success || !res.data) {
+        listEl.innerHTML = '<div class="col-span-full text-center py-6 text-rose-500 text-xs">Không thể tải đề thi.</div>';
+        return;
+      }
+
+      // Populate Category Filter
+      if (catFilter) {
+        const categories = Array.from(new Set(res.data.map(e => e.category).filter(Boolean)));
+        catFilter.innerHTML = '<option value="all">Tất cả danh mục</option>';
+        categories.forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat;
+          opt.textContent = cat;
+          catFilter.appendChild(opt);
+        });
+      }
+
+      listEl.innerHTML = '';
+      const selectedTitles = [];
+
+      res.data.forEach(exam => {
+        const isPreselected = preselectedIds.includes(exam.id);
+        if (isPreselected) selectedTitles.push(exam.title);
+
+        const item = document.createElement('label');
+        item.className = 'admin-merge-item flex items-center space-x-2.5 p-2 rounded-xl bg-white border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50/30 transition-all cursor-pointer text-xs';
+        item.dataset.cat = exam.category || '';
+
+        item.innerHTML = `
+          <input type="checkbox" value="${exam.id}" data-qcount="${exam.question_count}" data-title="${exam.title.replace(/"/g, '&quot;')}" ${isPreselected ? 'checked' : ''} class="admin-merge-cb rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer shrink-0">
+          <div class="overflow-hidden flex-grow">
+            <div class="font-bold text-gray-900 truncate" title="${exam.title}">${exam.title}</div>
+            <div class="flex items-center space-x-2 text-2xs text-gray-500 mt-0.5">
+              <span class="text-emerald-700 font-semibold">${exam.category}</span>
+              <span>•</span>
+              <span>${exam.question_count} câu</span>
+            </div>
+          </div>
+        `;
+
+        const cb = item.querySelector('.admin-merge-cb');
+        cb.addEventListener('change', () => this.updateMergeSelectedSummary());
+
+        listEl.appendChild(item);
+      });
+
+      this.updateMergeSelectedSummary();
+
+      // Auto-suggest title if preselected
+      const titleInput = document.getElementById('admin-merge-title');
+      const catInput = document.getElementById('admin-merge-category');
+      if (titleInput && (!titleInput.value || titleInput.value.startsWith('Đề thi tổng hợp'))) {
+        if (selectedTitles.length >= 2) {
+          titleInput.value = `Đề thi tổng hợp (${selectedTitles.length} đề thi)`;
+        }
+      }
+      if (catInput && !catInput.value && res.data.length > 0) {
+        catInput.value = res.data[0].category || 'Tổng hợp';
+      }
+    } catch (err) {
+      listEl.innerHTML = `<div class="col-span-full text-center py-6 text-rose-500 text-xs">Lỗi kết nối: ${err.message}</div>`;
+    }
+  },
+
+  // Update Summary Badge in Admin Merge Tab
+  updateMergeSelectedSummary() {
+    const checkedBoxes = Array.from(document.querySelectorAll('.admin-merge-cb:checked'));
+    const totalCount = checkedBoxes.reduce((sum, cb) => sum + (parseInt(cb.dataset.qcount, 10) || 0), 0);
+    const summaryEl = document.getElementById('admin-merge-selected-summary');
+    if (summaryEl) {
+      summaryEl.textContent = `Đã chọn: ${checkedBoxes.length} đề (${totalCount} câu)`;
+    }
+  },
+
+  // Handle Permanent Merge Submit (Admin)
+  async handleMergeExams() {
+    const checkedBoxes = Array.from(document.querySelectorAll('.admin-merge-cb:checked'));
+    const examIds = checkedBoxes.map(cb => parseInt(cb.value, 10));
+
+    if (examIds.length < 2) {
+      showToast('Vui lòng chọn ít nhất 2 bộ đề để gộp!', 'error');
+      return;
+    }
+
+    const title = document.getElementById('admin-merge-title')?.value.trim();
+    if (!title) {
+      showToast('Vui lòng nhập tên cho đề thi gộp mới!', 'error');
+      document.getElementById('admin-merge-title')?.focus();
+      return;
+    }
+
+    const category = document.getElementById('admin-merge-category')?.value.trim() || 'Tổng hợp';
+    const description = document.getElementById('admin-merge-desc')?.value.trim() || '';
+    const badge_text = document.getElementById('admin-merge-badge')?.value.trim() || 'Tổng hợp';
+    const duration_minutes = parseInt(document.getElementById('admin-merge-duration')?.value, 10) || 45;
+    const max_questions = parseInt(document.getElementById('admin-merge-max-q')?.value, 10) || 0;
+    const deduplicate = document.getElementById('admin-merge-dedup')?.checked ?? true;
+    const shuffle = document.getElementById('admin-merge-shuffle')?.checked ?? true;
+
+    const submitBtn = document.getElementById('admin-merge-submit-btn');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <div class="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+        <span>Đang tiến hành gộp đề thi...</span>
+      `;
+    }
+
+    try {
+      const res = await API.mergeAdminExams({
+        examIds,
+        title,
+        category,
+        description,
+        badge_text,
+        duration_minutes,
+        max_questions,
+        deduplicate,
+        shuffle
+      });
+
+      if (res.success && res.data) {
+        showToast(`Gộp đề thành công! Bộ đề mới "${res.data.title}" (#${res.data.id}) đã được lưu với ${res.data.question_count} câu hỏi.`, 'success');
+
+        // Reset title & desc
+        document.getElementById('admin-merge-title').value = '';
+        document.getElementById('admin-merge-desc').value = '';
+
+        // Reload dashboard & switch to list tab
+        await this.loadDashboard();
+        this.switchTab('list');
+
+        if (typeof App !== 'undefined') {
+          App.loadCategories();
+          App.loadExams();
+        }
+      } else {
+        if (res.error && res.error.includes('đăng nhập')) {
+          this.showLoginModal();
+        }
+        showToast(res.error || 'Không thể gộp đề thi.', 'error');
+      }
+    } catch (err) {
+      showToast('Lỗi máy chủ khi gộp đề: ' + err.message, 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+          </svg>
+          <span>Gộp Đề & Lưu Vào Database Ngay</span>
+        `;
+      }
     }
   },
 

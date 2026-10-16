@@ -316,21 +316,106 @@ app.get('/api/exams/:id', async (req, res) => {
   }
 });
 
+// 3.5 Combine multiple exams on-the-fly for practice / test (Public)
+app.post('/api/exams/combine', async (req, res) => {
+  try {
+    const { examIds, duration_minutes, maxQuestions, shuffle = true, deduplicate = true } = req.body;
+    if (!examIds || !Array.isArray(examIds) || examIds.length === 0) {
+      return res.status(400).json({ success: false, error: 'Vui lòng chọn ít nhất 1 bộ đề thi để gộp' });
+    }
+
+    const placeholders = examIds.map(() => '?').join(',');
+    const exams = await all(`SELECT id, title, category FROM exams WHERE id IN (${placeholders})`, examIds);
+    if (!exams || exams.length === 0) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy các đề thi đã chọn' });
+    }
+
+    const rawQuestions = await all(
+      `SELECT id, exam_id, question_number, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation 
+       FROM questions WHERE exam_id IN (${placeholders}) ORDER BY exam_id, question_number`,
+      examIds
+    );
+
+    let finalQuestions = [];
+    if (deduplicate) {
+      const seen = new Set();
+      for (const q of rawQuestions) {
+        const key = (q.question_text || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        if (!seen.has(key)) {
+          seen.add(key);
+          finalQuestions.push(q);
+        }
+      }
+    } else {
+      finalQuestions = [...rawQuestions];
+    }
+
+    if (shuffle) {
+      for (let i = finalQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [finalQuestions[i], finalQuestions[j]] = [finalQuestions[j], finalQuestions[i]];
+      }
+    }
+
+    if (maxQuestions && Number(maxQuestions) > 0 && Number(maxQuestions) < finalQuestions.length) {
+      finalQuestions = finalQuestions.slice(0, Number(maxQuestions));
+    }
+
+    // Number sequentially
+    finalQuestions = finalQuestions.map((q, idx) => ({
+      ...q,
+      display_number: idx + 1,
+      question_number: idx + 1
+    }));
+
+    const duration = duration_minutes !== undefined ? parseInt(duration_minutes, 10) : 45;
+    const combinedTitle = exams.length === 1 
+      ? exams[0].title 
+      : `Đề gộp (${exams.length} đề): ${exams[0].title} (+${exams.length - 1} đề khác)`;
+
+    res.json({
+      success: true,
+      data: {
+        id: 'combined',
+        isVirtual: true,
+        title: combinedTitle,
+        category: exams[0].category || 'Tổng hợp',
+        description: `Bộ đề tổng hợp từ ${exams.length} đề thi: ${exams.map(e => e.title).join(', ')}`,
+        duration_minutes: duration,
+        question_count: finalQuestions.length,
+        questions: finalQuestions
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 4. Submit Exam & Grade
 app.post('/api/exams/:id/submit', async (req, res) => {
   try {
     const examId = req.params.id;
-    const { userAnswers = {}, timeSpentSeconds = 0 } = req.body;
+    const { userAnswers = {}, timeSpentSeconds = 0, virtualExamTitle, questionsList } = req.body;
 
-    const exam = await get('SELECT * FROM exams WHERE id = ?', [examId]);
-    if (!exam) {
-      return res.status(404).json({ success: false, error: 'Không tìm thấy đề thi' });
+    let exam = null;
+    let questions = [];
+
+    if (examId === 'combined' || isNaN(Number(examId))) {
+      exam = { id: null, title: virtualExamTitle || 'Đề thi gộp' };
+      if (Array.isArray(questionsList) && questionsList.length > 0) {
+        questions = questionsList;
+      }
+    } else {
+      exam = await get('SELECT * FROM exams WHERE id = ?', [examId]);
+      if (!exam) {
+        return res.status(404).json({ success: false, error: 'Không tìm thấy đề thi' });
+      }
+
+      questions = await all(
+        'SELECT id, question_number, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation FROM questions WHERE exam_id = ? ORDER BY question_number ASC',
+        [examId]
+      );
     }
-
-    const questions = await all(
-      'SELECT id, question_number, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation FROM questions WHERE exam_id = ? ORDER BY question_number ASC',
-      [examId]
-    );
 
     let correctCount = 0;
     let wrongCount = 0;
@@ -375,21 +460,27 @@ app.post('/api/exams/:id/submit', async (req, res) => {
     const rawScore = totalQuestions > 0 ? (correctCount / totalQuestions) * 10 : 0;
     const score = Math.round(rawScore * 10) / 10;
 
-    await run(
-      `INSERT INTO submissions (exam_id, exam_title, score, total_questions, correct_count, wrong_count, unanswered_count, answers_json, time_spent_seconds)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        examId,
-        exam.title,
-        score,
-        totalQuestions,
-        correctCount,
-        wrongCount,
-        unansweredCount,
-        JSON.stringify(userAnswers),
-        timeSpentSeconds
-      ]
-    );
+    if (exam.id && !isNaN(Number(exam.id))) {
+      try {
+        await run(
+          `INSERT INTO submissions (exam_id, exam_title, score, total_questions, correct_count, wrong_count, unanswered_count, answers_json, time_spent_seconds)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            Number(exam.id),
+            exam.title,
+            score,
+            totalQuestions,
+            correctCount,
+            wrongCount,
+            unansweredCount,
+            JSON.stringify(userAnswers),
+            timeSpentSeconds
+          ]
+        );
+      } catch (subErr) {
+        console.warn('Could not record submission to DB:', subErr.message);
+      }
+    }
 
     res.json({
       success: true,
@@ -597,6 +688,121 @@ app.delete('/api/exams/:id', requireAdminAuth, async (req, res) => {
     }
 
     res.json({ success: true, message: 'Đã xóa đề thi thành công' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 9.5 Merge Multiple Exams into a New Exam (Admin only)
+app.post('/api/admin/exams/merge', requireAdminAuth, async (req, res) => {
+  try {
+    const {
+      examIds,
+      title,
+      category,
+      description,
+      duration_minutes,
+      badge_text,
+      maxQuestions,
+      shuffle = true,
+      deduplicate = true
+    } = req.body;
+
+    if (!examIds || !Array.isArray(examIds) || examIds.length < 2) {
+      return res.status(400).json({ success: false, error: 'Vui lòng chọn ít nhất 2 bộ đề để gộp' });
+    }
+
+    if (!title || !title.trim()) {
+      return res.status(400).json({ success: false, error: 'Vui lòng nhập tên cho đề thi gộp mới' });
+    }
+
+    const placeholders = examIds.map(() => '?').join(',');
+    const exams = await all(`SELECT id, title, category FROM exams WHERE id IN (${placeholders})`, examIds);
+    if (!exams || exams.length === 0) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy các đề thi đã chọn' });
+    }
+
+    const rawQuestions = await all(
+      `SELECT question_text, option_a, option_b, option_c, option_d, correct_answer, explanation 
+       FROM questions WHERE exam_id IN (${placeholders}) ORDER BY exam_id, question_number`,
+      examIds
+    );
+
+    if (rawQuestions.length === 0) {
+      return res.status(400).json({ success: false, error: 'Các đề được chọn không có câu hỏi nào' });
+    }
+
+    let mergedQuestions = [];
+    if (deduplicate) {
+      const seen = new Set();
+      for (const q of rawQuestions) {
+        const key = (q.question_text || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        if (!seen.has(key)) {
+          seen.add(key);
+          mergedQuestions.push(q);
+        }
+      }
+    } else {
+      mergedQuestions = [...rawQuestions];
+    }
+
+    if (shuffle) {
+      for (let i = mergedQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [mergedQuestions[i], mergedQuestions[j]] = [mergedQuestions[j], mergedQuestions[i]];
+      }
+    }
+
+    if (maxQuestions && Number(maxQuestions) > 0 && Number(maxQuestions) < mergedQuestions.length) {
+      mergedQuestions = mergedQuestions.slice(0, Number(maxQuestions));
+    }
+
+    const finalCategory = category && category.trim() ? category.trim() : (exams[0].category || 'Tổng hợp');
+    const finalDesc = description && description.trim() 
+      ? description.trim() 
+      : `Đề thi gộp từ ${exams.length} bộ đề (${exams.map(e => e.title).join(', ')})`;
+    const finalDuration = parseInt(duration_minutes, 10) || 60;
+    const finalBadge = badge_text && badge_text.trim() ? badge_text.trim() : 'Gộp đề';
+
+    // Insert new Exam
+    const examRes = await run(
+      `INSERT INTO exams (title, category, description, duration_minutes, badge_text)
+       VALUES (?, ?, ?, ?, ?)`,
+      [title.trim(), finalCategory, finalDesc, finalDuration, finalBadge]
+    );
+
+    const newExamId = examRes.lastID;
+
+    // Insert questions
+    for (let i = 0; i < mergedQuestions.length; i++) {
+      const q = mergedQuestions[i];
+      await run(
+        `INSERT INTO questions (exam_id, question_number, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          newExamId,
+          i + 1,
+          q.question_text,
+          q.option_a || '',
+          q.option_b || '',
+          q.option_c || '',
+          q.option_d || '',
+          (q.correct_answer || 'A').toUpperCase(),
+          q.explanation || ''
+        ]
+      );
+    }
+
+    res.json({
+      success: true,
+      message: `Đã gộp thành công ${exams.length} bộ đề thành đề mới với ${mergedQuestions.length} câu hỏi!`,
+      data: {
+        id: newExamId,
+        title: title.trim(),
+        question_count: mergedQuestions.length,
+        duration_minutes: finalDuration
+      }
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

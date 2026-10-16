@@ -151,6 +151,192 @@ const App = {
         this.loadExams();
       }, 300);
     });
+
+    // Start-Exam Duration Modal Events
+    document.getElementById('start-exam-modal-close-btn')?.addEventListener('click', () => {
+      document.getElementById('modal-start-exam')?.classList.add('hidden');
+    });
+
+    document.getElementById('start-exam-cancel-btn')?.addEventListener('click', () => {
+      document.getElementById('modal-start-exam')?.classList.add('hidden');
+    });
+
+    document.getElementById('start-exam-confirm-btn')?.addEventListener('click', () => {
+      const modal = document.getElementById('modal-start-exam');
+      modal?.classList.add('hidden');
+      if (this.pendingExam) {
+        const customMins = parseInt(document.getElementById('start-exam-custom-mins')?.value, 10);
+        this.openExam(this.pendingExam.id, this.pendingExam.mode, isNaN(customMins) ? 45 : customMins);
+      }
+    });
+
+    // Start-Exam Duration Pills
+    const startDurPills = document.querySelectorAll('.start-dur-btn');
+    startDurPills.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mins = btn.dataset.mins;
+        const input = document.getElementById('start-exam-custom-mins');
+        if (input) input.value = mins;
+
+        startDurPills.forEach(p => {
+          if (p === btn) {
+            p.className = 'start-dur-btn active px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition-all shadow-2xs cursor-pointer';
+          } else if (p.dataset.mins === '0') {
+            p.className = 'start-dur-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all cursor-pointer';
+          } else {
+            p.className = 'start-dur-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer';
+          }
+        });
+      });
+    });
+
+    document.getElementById('start-exam-custom-mins')?.addEventListener('input', (e) => {
+      const val = e.target.value;
+      startDurPills.forEach(p => {
+        if (p.dataset.mins === val) {
+          p.className = 'start-dur-btn active px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition-all shadow-2xs cursor-pointer';
+        } else if (p.dataset.mins === '0') {
+          p.className = 'start-dur-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all cursor-pointer';
+        } else {
+          p.className = 'start-dur-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer';
+        }
+      });
+    });
+
+    // Combine Exams Modal Events
+    document.getElementById('open-combine-modal-btn')?.addEventListener('click', () => {
+      this.openCombineModal();
+    });
+
+    document.getElementById('combine-modal-close-btn')?.addEventListener('click', () => {
+      document.getElementById('modal-combine-exam')?.classList.add('hidden');
+    });
+
+    document.getElementById('combine-modal-cancel-btn')?.addEventListener('click', () => {
+      document.getElementById('modal-combine-exam')?.classList.add('hidden');
+    });
+
+    // Combine Duration Pills
+    const combineDurPills = document.querySelectorAll('.user-dur-btn');
+    combineDurPills.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mins = btn.dataset.mins;
+        const input = document.getElementById('combine-custom-duration');
+        if (input) input.value = mins;
+
+        combineDurPills.forEach(p => {
+          if (p === btn) {
+            p.className = 'user-dur-btn active px-3.5 py-1.5 rounded-xl text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition-all shadow-2xs cursor-pointer';
+          } else if (p.dataset.mins === '0') {
+            p.className = 'user-dur-btn px-3.5 py-1.5 rounded-xl text-xs font-bold border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all cursor-pointer';
+          } else {
+            p.className = 'user-dur-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer';
+          }
+        });
+      });
+    });
+
+    document.getElementById('combine-custom-duration')?.addEventListener('input', (e) => {
+      const val = e.target.value;
+      combineDurPills.forEach(p => {
+        if (p.dataset.mins === val) {
+          p.className = 'user-dur-btn active px-3.5 py-1.5 rounded-xl text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition-all shadow-2xs cursor-pointer';
+        } else if (p.dataset.mins === '0') {
+          p.className = 'user-dur-btn px-3.5 py-1.5 rounded-xl text-xs font-bold border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all cursor-pointer';
+        } else {
+          p.className = 'user-dur-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer';
+        }
+      });
+    });
+
+    // Combine Category Filter
+    document.getElementById('combine-category-filter')?.addEventListener('change', (e) => {
+      const cat = e.target.value;
+      const items = document.querySelectorAll('.combine-exam-item');
+      items.forEach(item => {
+        if (cat === 'all' || item.dataset.cat === cat) {
+          item.classList.remove('hidden');
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+    });
+
+    // Combine Select All / Deselect All
+    document.getElementById('combine-select-all-btn')?.addEventListener('click', () => {
+      const visibleCheckboxes = document.querySelectorAll('.combine-exam-item:not(.hidden) .combine-exam-cb');
+      visibleCheckboxes.forEach(cb => cb.checked = true);
+      this.updateCombineSelectedSummary();
+    });
+
+    document.getElementById('combine-deselect-all-btn')?.addEventListener('click', () => {
+      const checkboxes = document.querySelectorAll('.combine-exam-cb');
+      checkboxes.forEach(cb => cb.checked = false);
+      this.updateCombineSelectedSummary();
+    });
+
+    // Combine Start Exam Button
+    document.getElementById('combine-start-btn')?.addEventListener('click', async () => {
+      const checkedBoxes = Array.from(document.querySelectorAll('.combine-exam-cb:checked'));
+      const examIds = checkedBoxes.map(cb => parseInt(cb.value, 10));
+
+      if (examIds.length < 2) {
+        showToast('Vui lòng chọn ít nhất 2 bộ đề để gộp!', 'error');
+        return;
+      }
+
+      const durationMinutes = parseInt(document.getElementById('combine-custom-duration')?.value, 10) || 0;
+      const maxQuestions = parseInt(document.getElementById('combine-max-questions')?.value, 10) || 0;
+      const mode = document.querySelector('input[name="combine_mode"]:checked')?.value || 'practice';
+
+      const btn = document.getElementById('combine-start-btn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>Đang gộp đề thi... ⏳</span>';
+      }
+
+      try {
+        const res = await API.combineExams({
+          examIds,
+          duration_minutes: durationMinutes,
+          max_questions: maxQuestions,
+          deduplicate: true,
+          shuffle: true
+        });
+
+        if (res.success && res.data) {
+          document.getElementById('modal-combine-exam')?.classList.add('hidden');
+          this.showView('exam');
+          ExamRunner.startExam(res.data, mode, null, durationMinutes);
+          showToast(`Đã gộp thành công ${examIds.length} bộ đề (${res.data.questions.length} câu hỏi)!`, 'success');
+        } else {
+          showToast(res.error || 'Không thể gộp đề thi.', 'error');
+        }
+      } catch (err) {
+        showToast('Lỗi khi gộp đề thi: ' + err.message, 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<span>Bắt đầu làm bài ngay 🚀</span>';
+        }
+      }
+    });
+
+    // Nav Timer Dropdown Popover
+    const navTimerBtn = document.getElementById('nav-timer');
+    const navTimerDropdown = document.getElementById('nav-timer-dropdown');
+    navTimerBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      navTimerDropdown?.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!navTimerDropdown?.classList.contains('hidden')) {
+        if (!navTimerBtn?.contains(e.target) && !navTimerDropdown?.contains(e.target)) {
+          navTimerDropdown?.classList.add('hidden');
+        }
+      }
+    });
   },
 
   // View Router
@@ -321,11 +507,11 @@ const App = {
         const btnTest = card.querySelector('.btn-test');
 
         btnPractice.addEventListener('click', () => {
-          this.openExam(exam.id, 'practice');
+          this.promptStartExam(exam, 'practice');
         });
 
         btnTest.addEventListener('click', () => {
-          this.openExam(exam.id, 'test');
+          this.promptStartExam(exam, 'test');
         });
 
         grid.appendChild(card);
@@ -335,13 +521,126 @@ const App = {
     }
   },
 
+  // Prompt duration selection before starting exam
+  promptStartExam(exam, mode = 'test') {
+    this.pendingExam = { id: exam.id, mode, exam };
+
+    const modal = document.getElementById('modal-start-exam');
+    if (!modal) {
+      this.openExam(exam.id, mode);
+      return;
+    }
+
+    const badge = exam.badge_text || (exam.category ? exam.category.substring(0, 15) : 'Trắc nghiệm');
+    const badgeEl = document.getElementById('start-exam-badge');
+    if (badgeEl) badgeEl.textContent = badge;
+
+    const titleEl = document.getElementById('start-exam-title');
+    if (titleEl) titleEl.textContent = exam.title;
+
+    const qcountEl = document.getElementById('start-exam-qcount');
+    if (qcountEl) qcountEl.textContent = `${exam.question_count} câu`;
+
+    const defDur = exam.duration_minutes !== undefined ? exam.duration_minutes : 45;
+    const defDurEl = document.getElementById('start-exam-default-duration');
+    if (defDurEl) defDurEl.textContent = defDur === 0 ? 'Không giới hạn (Tự do)' : `${defDur} phút`;
+
+    const minsInput = document.getElementById('start-exam-custom-mins');
+    if (minsInput) minsInput.value = defDur;
+
+    // Sync pills
+    const pills = document.querySelectorAll('.start-dur-btn');
+    pills.forEach(pill => {
+      const pMin = parseInt(pill.dataset.mins, 10);
+      if (pMin === parseInt(defDur, 10)) {
+        pill.className = 'start-dur-btn active px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition-all shadow-2xs cursor-pointer';
+      } else if (pill.dataset.mins === '0') {
+        pill.className = 'start-dur-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all cursor-pointer';
+      } else {
+        pill.className = 'start-dur-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer';
+      }
+    });
+
+    modal.classList.remove('hidden');
+  },
+
+  // Open Combine Exams Modal for Students
+  async openCombineModal() {
+    const modal = document.getElementById('modal-combine-exam');
+    const listEl = document.getElementById('combine-exams-list');
+    const catFilter = document.getElementById('combine-category-filter');
+    if (!modal || !listEl) return;
+
+    listEl.innerHTML = '<div class="col-span-2 text-center py-6 text-gray-500 text-xs">Đang tải danh sách đề thi...</div>';
+    modal.classList.remove('hidden');
+
+    try {
+      const res = await API.getExams();
+      if (!res.success || !res.data) {
+        listEl.innerHTML = '<div class="col-span-2 text-center py-6 text-rose-500 text-xs">Không thể tải đề thi.</div>';
+        return;
+      }
+
+      // Populate category filter options
+      if (catFilter) {
+        const categories = Array.from(new Set(res.data.map(e => e.category).filter(Boolean)));
+        catFilter.innerHTML = '<option value="all">Tất cả danh mục</option>';
+        categories.forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat;
+          opt.textContent = cat;
+          catFilter.appendChild(opt);
+        });
+      }
+
+      // Render exams list with checkboxes
+      listEl.innerHTML = '';
+      res.data.forEach(exam => {
+        const item = document.createElement('label');
+        item.className = 'combine-exam-item flex items-center space-x-2.5 p-2 rounded-xl bg-white border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50/30 transition-all cursor-pointer text-xs';
+        item.dataset.cat = exam.category || '';
+
+        item.innerHTML = `
+          <input type="checkbox" value="${exam.id}" data-qcount="${exam.question_count}" class="combine-exam-cb rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer shrink-0">
+          <div class="overflow-hidden flex-grow">
+            <div class="font-bold text-gray-900 truncate" title="${exam.title}">${exam.title}</div>
+            <div class="flex items-center space-x-2 text-2xs text-gray-500 mt-0.5">
+              <span class="text-emerald-700 font-semibold">${exam.category}</span>
+              <span>•</span>
+              <span>${exam.question_count} câu</span>
+            </div>
+          </div>
+        `;
+
+        const cb = item.querySelector('.combine-exam-cb');
+        cb.addEventListener('change', () => this.updateCombineSelectedSummary());
+
+        listEl.appendChild(item);
+      });
+
+      this.updateCombineSelectedSummary();
+    } catch (err) {
+      listEl.innerHTML = `<div class="col-span-2 text-center py-6 text-rose-500 text-xs">Lỗi kết nối: ${err.message}</div>`;
+    }
+  },
+
+  // Update Summary Badge in Student Combine Modal
+  updateCombineSelectedSummary() {
+    const checkedBoxes = Array.from(document.querySelectorAll('.combine-exam-cb:checked'));
+    const totalCount = checkedBoxes.reduce((sum, cb) => sum + (parseInt(cb.dataset.qcount, 10) || 0), 0);
+    const badge = document.getElementById('combine-selected-badge');
+    if (badge) {
+      badge.textContent = `Đã chọn: ${checkedBoxes.length} đề (${totalCount} câu)`;
+    }
+  },
+
   // Open Exam
-  async openExam(examId, mode = 'test') {
+  async openExam(examId, mode = 'test', customDurationMinutes = null) {
     try {
       const res = await API.getExamById(examId);
       if (res.success) {
         this.showView('exam');
-        ExamRunner.startExam(res.data, mode);
+        ExamRunner.startExam(res.data, mode, null, customDurationMinutes);
       } else {
         showToast(res.error || 'Không thể mở đề thi', 'error');
       }
