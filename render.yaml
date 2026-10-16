@@ -3,9 +3,16 @@ services:
     name: tracnghiemfree
     env: node
     plan: free
-    buildCommand: npm install && npm rebuild sqlite3 --build-from-source
+    buildCommand: npm install
     startCommand: node server.js
     envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tracnghiemfree-db
+          property: connectionString
       - key: NODE_VERSION
         value: 20.18.0
 
+databases:
+  - name: tracnghiemfree-db
+    plan: free

@@ -1,136 +1,349 @@
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-const isServerless = !!(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
-const dataDir = path.join(__dirname, 'data');
-if (!fs.existsSync(dataDir)) {
-  try { fs.mkdirSync(dataDir, { recursive: true }); } catch (e) {}
-}
+const isPg = !!(process.env.DATABASE_URL || process.env.PGHOST);
+let pool = null;
+let sqliteDb = null;
 
-let dbPath = path.join(dataDir, 'uniprep.db');
-if (isServerless) {
-  const tmpDbPath = path.join('/tmp', 'uniprep.db');
-  if (!fs.existsSync(tmpDbPath)) {
-    try {
-      if (fs.existsSync(dbPath)) {
-        fs.copyFileSync(dbPath, tmpDbPath);
-      }
-    } catch (e) {
-      console.warn('Could not copy db to /tmp:', e.message);
+if (isPg) {
+  const { Pool } = require('pg');
+  const connStr = process.env.DATABASE_URL;
+  const isLocal = connStr && (connStr.includes('localhost') || connStr.includes('127.0.0.1'));
+  pool = new Pool({
+    connectionString: connStr,
+    ssl: isLocal ? false : { rejectUnauthorized: false }
+  });
+  console.log('Database Engine: PostgreSQL (Connected via DATABASE_URL)');
+} else {
+  let sqlite3 = null;
+  try {
+    sqlite3 = require('sqlite3').verbose();
+  } catch (e) {
+    console.warn('Notice: sqlite3 module not loaded. Set DATABASE_URL to use PostgreSQL.');
+  }
+
+  if (sqlite3) {
+    const isServerless = !!(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
+    const dataDir = path.join(__dirname, 'data');
+    if (!fs.existsSync(dataDir)) {
+      try { fs.mkdirSync(dataDir, { recursive: true }); } catch (e) {}
     }
+
+    let dbPath = path.join(dataDir, 'uniprep.db');
+    if (isServerless) {
+      const tmpDbPath = path.join('/tmp', 'uniprep.db');
+      if (!fs.existsSync(tmpDbPath)) {
+        try {
+          if (fs.existsSync(dbPath)) {
+            fs.copyFileSync(dbPath, tmpDbPath);
+          }
+        } catch (e) {
+          console.warn('Could not copy db to /tmp:', e.message);
+        }
+      }
+      if (fs.existsSync(tmpDbPath)) {
+        dbPath = tmpDbPath;
+      }
+    }
+
+    sqliteDb = new sqlite3.Database(dbPath);
+    console.log('Database Engine: SQLite (' + dbPath + ')');
   }
-  if (fs.existsSync(tmpDbPath)) {
-    dbPath = tmpDbPath;
+}
+
+// Convert SQLite ? to Postgres $1, $2 and LIKE to ILIKE
+function toPgSql(sql) {
+  let paramIdx = 1;
+  let pgSql = sql.replace(/\?/g, () => '$' + (paramIdx++));
+  pgSql = pgSql.replace(/\bLIKE\b/gi, 'ILIKE');
+  if (/^\s*INSERT\s+INTO/i.test(pgSql) && !/RETURNING/i.test(pgSql)) {
+    pgSql += ' RETURNING id';
+  }
+  return pgSql;
+}
+
+// Helper wrapper for async database queries
+async function run(sql, params = []) {
+  if (isPg && pool) {
+    const pgSql = toPgSql(sql);
+    const res = await pool.query(pgSql, params);
+    const lastID = res.rows[0]?.id ? Number(res.rows[0].id) : (res.rows[0] ? Object.values(res.rows[0])[0] : null);
+    return { lastID, changes: res.rowCount };
+  } else if (sqliteDb) {
+    return new Promise((resolve, reject) => {
+      sqliteDb.run(sql, params, function (err) {
+        if (err) reject(err);
+        else resolve({ lastID: this.lastID, changes: this.changes });
+      });
+    });
+  } else {
+    throw new Error('Chưa kết nối cơ sở dữ liệu. Vui lòng thiết lập biến môi trường DATABASE_URL cho PostgreSQL.');
   }
 }
 
-const db = new sqlite3.Database(dbPath);
-
-// Helper wrapper for async sqlite queries
-function run(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) {
-      if (err) reject(err);
-      else resolve({ lastID: this.lastID, changes: this.changes });
+async function get(sql, params = []) {
+  if (isPg && pool) {
+    const pgSql = toPgSql(sql);
+    const res = await pool.query(pgSql, params);
+    return res.rows[0] || null;
+  } else if (sqliteDb) {
+    return new Promise((resolve, reject) => {
+      sqliteDb.get(sql, params, (err, row) => {
+        if (err) reject(err);
+        else resolve(row || null);
+      });
     });
-  });
+  } else {
+    throw new Error('Chưa kết nối cơ sở dữ liệu. Vui lòng thiết lập biến môi trường DATABASE_URL cho PostgreSQL.');
+  }
 }
 
-function get(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
+async function all(sql, params = []) {
+  if (isPg && pool) {
+    const pgSql = toPgSql(sql);
+    const res = await pool.query(pgSql, params);
+    return res.rows || [];
+  } else if (sqliteDb) {
+    return new Promise((resolve, reject) => {
+      sqliteDb.all(sql, params, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
     });
-  });
-}
-
-function all(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
-    });
-  });
+  } else {
+    throw new Error('Chưa kết nối cơ sở dữ liệu. Vui lòng thiết lập biến môi trường DATABASE_URL cho PostgreSQL.');
+  }
 }
 
 // Initialize tables
 async function initDb() {
-  await run(`
-    CREATE TABLE IF NOT EXISTS exams (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      category TEXT NOT NULL,
-      description TEXT,
-      duration_minutes INTEGER DEFAULT 45,
-      badge_text TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+  if (isPg && pool) {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS exams (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        category TEXT NOT NULL,
+        description TEXT,
+        duration_minutes INTEGER DEFAULT 45,
+        badge_text TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
 
-  await run(`
-    CREATE TABLE IF NOT EXISTS questions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      exam_id INTEGER NOT NULL,
-      question_number INTEGER NOT NULL,
-      question_text TEXT NOT NULL,
-      option_a TEXT NOT NULL,
-      option_b TEXT NOT NULL,
-      option_c TEXT NOT NULL,
-      option_d TEXT NOT NULL,
-      correct_answer TEXT NOT NULL,
-      explanation TEXT,
-      FOREIGN KEY (exam_id) REFERENCES exams (id) ON DELETE CASCADE
-    )
-  `);
+      CREATE TABLE IF NOT EXISTS questions (
+        id SERIAL PRIMARY KEY,
+        exam_id INTEGER NOT NULL REFERENCES exams(id) ON DELETE CASCADE,
+        question_number INTEGER NOT NULL,
+        question_text TEXT NOT NULL,
+        option_a TEXT NOT NULL,
+        option_b TEXT NOT NULL,
+        option_c TEXT NOT NULL,
+        option_d TEXT NOT NULL,
+        correct_answer TEXT NOT NULL,
+        explanation TEXT
+      );
 
-  await run(`
-    CREATE TABLE IF NOT EXISTS submissions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      exam_id INTEGER NOT NULL,
-      exam_title TEXT NOT NULL,
-      score REAL NOT NULL,
-      total_questions INTEGER NOT NULL,
-      correct_count INTEGER NOT NULL,
-      wrong_count INTEGER NOT NULL,
-      unanswered_count INTEGER NOT NULL,
-      answers_json TEXT,
-      time_spent_seconds INTEGER DEFAULT 0,
-      submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (exam_id) REFERENCES exams (id) ON DELETE CASCADE
-    )
-  `);
+      CREATE TABLE IF NOT EXISTS submissions (
+        id SERIAL PRIMARY KEY,
+        exam_id INTEGER NOT NULL REFERENCES exams(id) ON DELETE CASCADE,
+        exam_title TEXT NOT NULL,
+        score REAL NOT NULL,
+        total_questions INTEGER NOT NULL,
+        correct_count INTEGER NOT NULL,
+        wrong_count INTEGER NOT NULL,
+        unanswered_count INTEGER NOT NULL,
+        answers_json TEXT,
+        time_spent_seconds INTEGER DEFAULT 0,
+        submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
 
-  await run(`
-    CREATE TABLE IF NOT EXISTS admin_users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      display_name TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+      CREATE TABLE IF NOT EXISTS admin_users (
+        id SERIAL PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        display_name TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
 
-  // Seed default admin account if none exists
-  const crypto = require('crypto');
-  const defaultAdmin = await get('SELECT * FROM admin_users WHERE username = ?', ['admin']);
-  if (!defaultAdmin) {
-    const hash = crypto.createHash('sha256').update('admin123').digest('hex');
-    await run(
-      'INSERT INTO admin_users (username, password_hash, display_name) VALUES (?, ?, ?)',
-      ['admin', hash, 'Quản Trị Viên']
-    );
-    console.log('Default admin user initialized (username: admin, password: admin123)');
+    // Seed default admin account
+    const defaultAdmin = await get('SELECT * FROM admin_users WHERE username = ?', ['admin']);
+    if (!defaultAdmin) {
+      const crypto = require('crypto');
+      const hash = crypto.createHash('sha256').update('admin123').digest('hex');
+      await run(
+        'INSERT INTO admin_users (username, password_hash, display_name) VALUES (?, ?, ?)',
+        ['admin', hash, 'Quản Trị Viên']
+      );
+      console.log('Default admin user initialized in PostgreSQL (username: admin, password: admin123)');
+    }
+
+    // Check if exams exist; if empty, auto-seed
+    const anyExam = await get('SELECT id FROM exams LIMIT 1');
+    if (!anyExam) {
+      console.log('PostgreSQL database is empty. Seeding initial exams and QPAN...');
+      await seedInitialData();
+      await seedAllQpanInDb();
+      console.log('PostgreSQL database seeded successfully!');
+    }
+  } else if (sqliteDb) {
+    await run(`
+      CREATE TABLE IF NOT EXISTS exams (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        category TEXT NOT NULL,
+        description TEXT,
+        duration_minutes INTEGER DEFAULT 45,
+        badge_text TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await run(`
+      CREATE TABLE IF NOT EXISTS questions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        exam_id INTEGER NOT NULL,
+        question_number INTEGER NOT NULL,
+        question_text TEXT NOT NULL,
+        option_a TEXT NOT NULL,
+        option_b TEXT NOT NULL,
+        option_c TEXT NOT NULL,
+        option_d TEXT NOT NULL,
+        correct_answer TEXT NOT NULL,
+        explanation TEXT,
+        FOREIGN KEY (exam_id) REFERENCES exams (id) ON DELETE CASCADE
+      )
+    `);
+
+    await run(`
+      CREATE TABLE IF NOT EXISTS submissions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        exam_id INTEGER NOT NULL,
+        exam_title TEXT NOT NULL,
+        score REAL NOT NULL,
+        total_questions INTEGER NOT NULL,
+        correct_count INTEGER NOT NULL,
+        wrong_count INTEGER NOT NULL,
+        unanswered_count INTEGER NOT NULL,
+        answers_json TEXT,
+        time_spent_seconds INTEGER DEFAULT 0,
+        submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (exam_id) REFERENCES exams (id) ON DELETE CASCADE
+      )
+    `);
+
+    await run(`
+      CREATE TABLE IF NOT EXISTS admin_users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        display_name TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    const crypto = require('crypto');
+    const defaultAdmin = await get('SELECT * FROM admin_users WHERE username = ?', ['admin']);
+    if (!defaultAdmin) {
+      const hash = crypto.createHash('sha256').update('admin123').digest('hex');
+      await run(
+        'INSERT INTO admin_users (username, password_hash, display_name) VALUES (?, ?, ?)',
+        ['admin', hash, 'Quản Trị Viên']
+      );
+      console.log('Default admin user initialized (username: admin, password: admin123)');
+    }
+
+    const trietExam = await get(`SELECT id FROM exams WHERE title LIKE '%Triết học Mác - Lênin 2023%'`);
+    if (!trietExam) {
+      console.log('Seeding initial exam database...');
+      await seedInitialData();
+      console.log('Initial data seeded successfully!');
+    }
+  }
+}
+
+async function seedAllQpanInDb() {
+  const hp1Path = path.join(__dirname, 'hp1_parsed_questions.json');
+  if (fs.existsSync(hp1Path)) {
+    try {
+      const qs1 = JSON.parse(fs.readFileSync(hp1Path, 'utf8'));
+      const b1 = qs1.filter(q => q.question_number >= 1 && q.question_number <= 20);
+      const b2 = qs1.filter(q => (q.question_number >= 21 && q.question_number <= 40) || (q.question_number >= 163 && q.question_number <= 182));
+      const b3 = qs1.filter(q => q.question_number >= 41 && q.question_number <= 60);
+      const b4 = qs1.filter(q => (q.question_number >= 61 && q.question_number <= 80) || (q.question_number >= 142 && q.question_number <= 162));
+      const b5 = qs1.filter(q => (q.question_number >= 81 && q.question_number <= 100) || q.question_number === 166);
+      const b6 = qs1.filter(q => q.question_number >= 101 && q.question_number <= 120);
+      const b7 = qs1.filter(q => q.question_number >= 121 && q.question_number <= 141);
+      const b8 = qs1.filter(q => q.question_number >= 183 && q.question_number <= 216);
+
+      const hp1Defs = [
+        { title: 'QPAN HP1 - Bài 1: Quan điểm của CN Mác-Lênin, tư tưởng Hồ Chí Minh về chiến tranh, quân đội và bảo vệ Tổ quốc', cat: 'Quốc phòng An ninh', dur: 25, badge: 'QPAN Bài 1', qs: b1 },
+        { title: 'QPAN HP1 - Bài 2: Xây dựng nền quốc phòng toàn dân, an ninh nhân dân', cat: 'Quốc phòng An ninh', dur: 45, badge: 'QPAN Bài 2', qs: b2 },
+        { title: 'QPAN HP1 - Bài 3: Chiến tranh nhân dân bảo vệ Tổ quốc Việt Nam XHCN', cat: 'Quốc phòng An ninh', dur: 25, badge: 'QPAN Bài 3', qs: b3 },
+        { title: 'QPAN HP1 - Bài 4: Xây dựng lực lượng vũ trang nhân dân Việt Nam', cat: 'Quốc phòng An ninh', dur: 45, badge: 'QPAN Bài 4', qs: b4 },
+        { title: 'QPAN HP1 - Bài 5: Kết hợp phát triển kinh tế - xã hội với tăng cường củng cố QP - AN', cat: 'Quốc phòng An ninh', dur: 25, badge: 'QPAN Bài 5', qs: b5 },
+        { title: 'QPAN HP1 - Bài 6: Những vấn đề cơ bản về lịch sử nghệ thuật quân sự Việt Nam', cat: 'Quốc phòng An ninh', dur: 25, badge: 'QPAN Bài 6', qs: b6 },
+        { title: 'QPAN HP1 - Bài 7: Xây dựng và bảo vệ chủ quyền lãnh thổ, biên giới quốc gia', cat: 'Quốc phòng An ninh', dur: 25, badge: 'QPAN Bài 7', qs: b7 },
+        { title: 'QPAN HP1 - Bài 8: Bảo vệ an ninh quốc gia và giữ gìn trật tự, an toàn xã hội', cat: 'Quốc phòng An ninh', dur: 35, badge: 'QPAN Bài 8', qs: b8 },
+        { title: 'QPAN HP1 - Ngân hàng câu hỏi Tổng hợp (Full 211 câu)', cat: 'Quốc phòng An ninh', dur: 60, badge: 'QPAN Full', qs: qs1 }
+      ];
+
+      for (const d of hp1Defs) {
+        const res = await run('INSERT INTO exams (title, category, duration_minutes, badge_text) VALUES (?, ?, ?, ?)', [d.title, d.cat, d.dur, d.badge]);
+        const examId = res.lastID;
+        for (let i = 0; i < d.qs.length; i++) {
+          const q = d.qs[i];
+          const exp = q.explanation || `Phương án đúng là ${q.correct_answer}.`;
+          await run(
+            'INSERT INTO questions (exam_id, question_number, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [examId, i + 1, q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, q.correct_answer, exp]
+          );
+        }
+      }
+    } catch (e) {
+      console.warn('Auto seed HP1 error:', e.message);
+    }
   }
 
-  // Check if standard Triết học exam exists, if not seed the full set
-  const trietExam = await get(`SELECT id FROM exams WHERE title LIKE '%Triết học Mác - Lênin 2023%'`);
-  if (!trietExam) {
-    console.log('Seeding initial exam database...');
-    await seedInitialData();
-    console.log('Initial data seeded successfully!');
+  const hp2Path = path.join(__dirname, 'hp2_parsed_questions.json');
+  if (fs.existsSync(hp2Path)) {
+    try {
+      const qs2 = JSON.parse(fs.readFileSync(hp2Path, 'utf8'));
+      const b1 = qs2.filter(q => q.question_number >= 1 && q.question_number <= 30);
+      const b2 = qs2.filter(q => q.question_number >= 31 && q.question_number <= 60);
+      const b3 = qs2.filter(q => q.question_number >= 61 && q.question_number <= 97);
+      const b4 = qs2.filter(q => q.question_number >= 98 && q.question_number <= 129);
+      const b5 = qs2.filter(q => q.question_number >= 130 && q.question_number <= 159);
+      const b6 = qs2.filter(q => q.question_number >= 160 && q.question_number <= 189);
+      const b7 = qs2.filter(q => q.question_number >= 190 && q.question_number <= 219);
+
+      const hp2Defs = [
+        { title: 'QPAN HP2 - Bài 1: Phòng, chống chiến lược "Diễn biến hòa bình", bạo loạn lật đổ của các thế lực thù địch', cat: 'Quốc phòng An ninh', dur: 30, badge: 'QPAN HP2 Bài 1', qs: b1 },
+        { title: 'QPAN HP2 - Bài 2: Một số nội dung cơ bản về dân tộc, tôn giáo và đấu tranh phòng chống địch lợi dụng vấn đề dân tộc, tôn giáo', cat: 'Quốc phòng An ninh', dur: 30, badge: 'QPAN HP2 Bài 2', qs: b2 },
+        { title: 'QPAN HP2 - Bài 3: Phòng, chống vi phạm pháp luật về bảo vệ môi trường', cat: 'Quốc phòng An ninh', dur: 30, badge: 'QPAN HP2 Bài 3', qs: b3 },
+        { title: 'QPAN HP2 - Bài 4: Phòng, chống vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông', cat: 'Quốc phòng An ninh', dur: 30, badge: 'QPAN HP2 Bài 4', qs: b4 },
+        { title: 'QPAN HP2 - Bài 5: Phòng, chống một số loại tội phạm xâm hại danh dự, nhân phẩm của người khác', cat: 'Quốc phòng An ninh', dur: 30, badge: 'QPAN HP2 Bài 5', qs: b5 },
+        { title: 'QPAN HP2 - Bài 6: An toàn thông tin và phòng, chống vi phạm pháp luật trên không gian mạng', cat: 'Quốc phòng An ninh', dur: 30, badge: 'QPAN HP2 Bài 6', qs: b6 },
+        { title: 'QPAN HP2 - Bài 7: An ninh phi truyền thống và ứng phó các mối đe dọa an ninh phi truyền thống ở Việt Nam', cat: 'Quốc phòng An ninh', dur: 30, badge: 'QPAN HP2 Bài 7', qs: b7 },
+        { title: 'QPAN HP2 - Ngân hàng câu hỏi Tổng hợp (Full 210 câu)', cat: 'Quốc phòng An ninh', dur: 60, badge: 'QPAN HP2 Full', qs: qs2 }
+      ];
+
+      for (const d of hp2Defs) {
+        const res = await run('INSERT INTO exams (title, category, duration_minutes, badge_text) VALUES (?, ?, ?, ?)', [d.title, d.cat, d.dur, d.badge]);
+        const examId = res.lastID;
+        for (let i = 0; i < d.qs.length; i++) {
+          const q = d.qs[i];
+          const exp = q.explanation || `Phương án đúng là ${q.correct_answer}.`;
+          await run(
+            'INSERT INTO questions (exam_id, question_number, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [examId, i + 1, q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, q.correct_answer, exp]
+          );
+        }
+      }
+    } catch (e) {
+      console.warn('Auto seed HP2 error:', e.message);
+    }
   }
 }
 
@@ -722,10 +935,13 @@ async function seedInitialData() {
 }
 
 module.exports = {
-  db,
+  db: sqliteDb || pool,
+  sqliteDb,
+  pool,
   run,
   get,
   all,
   initDb
 };
+
 
