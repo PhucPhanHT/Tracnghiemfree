@@ -4,6 +4,7 @@
 
 [functions]
   node_bundler = "esbuild"
+  external_node_modules = ["sqlite3"]
   included_files = ["data/**", "parser.js", "db.js", "public/sample_exam.docx"]
 
 [[redirects]]

@@ -2,12 +2,29 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
+const isServerless = !!(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+  try { fs.mkdirSync(dataDir, { recursive: true }); } catch (e) {}
 }
 
-const dbPath = path.join(dataDir, 'uniprep.db');
+let dbPath = path.join(dataDir, 'uniprep.db');
+if (isServerless) {
+  const tmpDbPath = path.join('/tmp', 'uniprep.db');
+  if (!fs.existsSync(tmpDbPath)) {
+    try {
+      if (fs.existsSync(dbPath)) {
+        fs.copyFileSync(dbPath, tmpDbPath);
+      }
+    } catch (e) {
+      console.warn('Could not copy db to /tmp:', e.message);
+    }
+  }
+  if (fs.existsSync(tmpDbPath)) {
+    dbPath = tmpDbPath;
+  }
+}
+
 const db = new sqlite3.Database(dbPath);
 
 // Helper wrapper for async sqlite queries
