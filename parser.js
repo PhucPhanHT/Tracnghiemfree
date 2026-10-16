@@ -20,14 +20,14 @@ function parseExamText(rawText) {
   // Matches "Câu 1:", "Cau 1:", "Câu 1.", "Câu 1 -", "1.", "1/", "1:"
   const questionRegex = /^(?:c[âa]u\s*(\d+)[\s.:\-–—]|(\d+)[\s.:\)\/–—])\s*(.*)$/i;
 
-  // Matches "A.", "A)", "[A]", "a.", "a)", "*A.", "A*."
-  const optARegex = /^[*]?\s*[(\[]?[A|a][*]?\s*[)\]\.:\s-]\s*(.*)$/;
-  const optBRegex = /^[*]?\s*[(\[]?[B|b][*]?\s*[)\]\.:\s-]\s*(.*)$/;
-  const optCRegex = /^[*]?\s*[(\[]?[C|c][*]?\s*[)\]\.:\s-]\s*(.*)$/;
-  const optDRegex = /^[*]?\s*[(\[]?[D|d][*]?\s*[)\]\.:\s-]\s*(.*)$/;
+  // Matches "A.", "A,", "A)", "[A]", "a.", "a,", "a)", "*A.", "A*."
+  const optARegex = /^[*]?\s*[(\[]?[A|a][*]?\s*[)\]\.,:\s-]\s*(.*)$/;
+  const optBRegex = /^[*]?\s*[(\[]?[B|b][*]?\s*[)\]\.,:\s-]\s*(.*)$/;
+  const optCRegex = /^[*]?\s*[(\[]?[C|c][*]?\s*[)\]\.,:\s-]\s*(.*)$/;
+  const optDRegex = /^[*]?\s*[(\[]?[D|d][*]?\s*[)\]\.,:\s-]\s*(.*)$/;
 
   // Check if line marks option with an asterisk (*A or A*)
-  const markedOptRegex = /^\s*[*]\s*[(\[]?([A-D])[)\]\.:\s-]|^\s*[(\[]?([A-D])\s*[*][)\]\.:\s-]/i;
+  const markedOptRegex = /^\s*[*]\s*[(\[]?([A-D])[)\]\.,:\s-]|^\s*[(\[]?([A-D])\s*[*][)\]\.,:\s-]/i;
 
   // Matches "Đáp án: A", "Dap an: A", "Đ/a: B", "Key: C", "Đáp án đúng: D"
   const answerRegex = /^(?:đ[áa]p\s*[áa]n(?:\s*đ[úu]ng)?|[đd]\/a|key|ch[ọo]n|ans|answer)\s*[:=\-–]?\s*([A-D])/i;

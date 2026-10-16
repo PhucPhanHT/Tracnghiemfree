@@ -57,6 +57,15 @@ const API = {
     }
   },
 
+  async changeAdminAccount(payload) {
+    const res = await fetch('/api/admin/change-account', {
+      method: 'POST',
+      headers: this.authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  },
+
   async logoutAdmin() {
     try {
       await fetch('/api/admin/logout', {

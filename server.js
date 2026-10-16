@@ -27,6 +27,7 @@ function createAdminSession(user) {
   const token = 'adm_' + crypto.randomBytes(24).toString('hex');
   const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
   adminSessions.set(token, {
+    id: user.id,
     username: user.username,
     displayName: user.display_name || user.username,
     expiresAt
@@ -81,8 +82,9 @@ app.post('/api/admin/login', async (req, res) => {
     }
 
     const inputHash = crypto.createHash('sha256').update(password).digest('hex');
+    const defaultHash = crypto.createHash('sha256').update('admin123').digest('hex');
     const isValid = (user.password_hash === inputHash) ||
-                    (trimmedUser === 'admin' && (password === 'admin123' || password === 'admin'));
+                    (trimmedUser === 'admin' && user.password_hash === defaultHash && (password === 'admin123' || password === 'admin'));
 
     if (!isValid) {
       return res.status(401).json({ success: false, error: 'Tài khoản hoặc mật khẩu không chính xác' });
@@ -116,6 +118,72 @@ app.get('/api/admin/me', (req, res) => {
       displayName: session.displayName
     }
   });
+});
+
+// Admin Change Account Credentials
+app.post('/api/admin/change-account', requireAdminAuth, async (req, res) => {
+  try {
+    const { currentPassword, newUsername, newDisplayName, newPassword } = req.body;
+    const session = req.adminUser;
+
+    const user = await get('SELECT * FROM admin_users WHERE id = ?', [session.id]);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy tài khoản quản trị.' });
+    }
+
+    // Verify current password
+    const currentHash = crypto.createHash('sha256').update(currentPassword || '').digest('hex');
+    const defaultHash = crypto.createHash('sha256').update('admin123').digest('hex');
+    const isCurrentValid = (user.password_hash === currentHash) ||
+                          (user.username === 'admin' && user.password_hash === defaultHash && (currentPassword === 'admin123' || currentPassword === 'admin'));
+
+    if (!isCurrentValid) {
+      return res.status(400).json({ success: false, error: 'Mật khẩu hiện tại không chính xác!' });
+    }
+
+    const updatedUsername = (newUsername && newUsername.trim()) ? newUsername.trim() : user.username;
+    const updatedDisplayName = (newDisplayName && newDisplayName.trim()) ? newDisplayName.trim() : (user.display_name || updatedUsername);
+
+    if (!updatedUsername) {
+      return res.status(400).json({ success: false, error: 'Tên đăng nhập không được để trống.' });
+    }
+
+    // Check duplicate username if changing username
+    if (updatedUsername !== user.username) {
+      const existing = await get('SELECT id FROM admin_users WHERE username = ? AND id != ?', [updatedUsername, user.id]);
+      if (existing) {
+        return res.status(400).json({ success: false, error: 'Tên đăng nhập này đã tồn tại, vui lòng chọn tên khác.' });
+      }
+    }
+
+    let updatedHash = user.password_hash;
+    if (newPassword && newPassword.trim()) {
+      if (newPassword.trim().length < 4) {
+        return res.status(400).json({ success: false, error: 'Mật khẩu mới phải có ít nhất 4 ký tự.' });
+      }
+      updatedHash = crypto.createHash('sha256').update(newPassword.trim()).digest('hex');
+    }
+
+    await run(
+      'UPDATE admin_users SET username = ?, password_hash = ?, display_name = ? WHERE id = ?',
+      [updatedUsername, updatedHash, updatedDisplayName, user.id]
+    );
+
+    // Update active session in memory
+    session.username = updatedUsername;
+    session.displayName = updatedDisplayName;
+
+    res.json({
+      success: true,
+      message: 'Cập nhật tài khoản quản trị thành công!',
+      user: {
+        username: updatedUsername,
+        displayName: updatedDisplayName
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // Admin Logout

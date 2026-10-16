@@ -300,6 +300,13 @@
             <span id="admin-user-display">Quản Trị Viên (admin)</span>
           </div>
 
+          <button id="admin-change-account-btn" class="px-3 py-2 rounded-xl border border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 text-xs sm:text-sm font-semibold flex items-center space-x-1.5 transition-colors" title="Đổi tài khoản và mật khẩu quản trị">
+            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+            </svg>
+            <span>Đổi tài khoản</span>
+          </button>
+
           <button id="admin-logout-btn" class="px-3 py-2 rounded-xl border border-rose-200 text-rose-600 text-xs sm:text-sm font-semibold hover:bg-rose-50 flex items-center space-x-1.5 transition-colors" title="Đăng xuất khỏi hệ thống">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -769,28 +776,17 @@
         </div>
       </div>
 
-      <!-- Info Alert Box with Default Credentials -->
-      <div class="mb-5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-start space-x-2">
-        <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-        </svg>
-        <div>
-          <span class="font-bold">Tài khoản quản trị mặc định:</span><br>
-          Tên đăng nhập: <code class="font-mono bg-white px-1 py-0.5 rounded border border-emerald-200 font-bold">admin</code> | Mật khẩu: <code class="font-mono bg-white px-1 py-0.5 rounded border border-emerald-200 font-bold">admin123</code>
-        </div>
-      </div>
-
       <!-- Login Form -->
       <form id="admin-login-form" class="space-y-4">
         <div>
           <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tên đăng nhập *</label>
-          <input type="text" id="login-username" value="admin" required placeholder="Nhập username" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+          <input type="text" id="login-username" value="" required placeholder="Nhập username" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
         </div>
 
         <div>
           <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Mật khẩu *</label>
           <div class="relative">
-            <input type="password" id="login-password" value="admin123" required placeholder="Nhập mật khẩu" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 pr-10">
+            <input type="password" id="login-password" value="" required placeholder="Nhập mật khẩu" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 pr-10">
             <button type="button" id="login-toggle-pwd-btn" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -812,6 +808,70 @@
         <button type="submit" id="login-submit-btn" class="w-full py-3 rounded-xl bg-[#00a86b] hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/20 flex items-center justify-center space-x-2 transition-all">
           <span>Đăng Nhập Quản Trị</span>
         </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Đổi Tài Khoản & Mật Khẩu Admin -->
+  <div id="admin-account-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in">
+    <div class="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl relative border border-gray-100 text-left transform transition-all animate-scale-up">
+      <!-- Close button -->
+      <button id="account-modal-close-btn" type="button" class="absolute top-5 right-5 p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <!-- Modal Header -->
+      <div class="flex items-center space-x-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 flex items-center justify-center text-white shadow-md shadow-amber-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-gray-900 tracking-tight">Đổi Tài Khoản & Mật Khẩu</h2>
+          <p class="text-xs text-gray-500">Cập nhật thông tin đăng nhập Quản trị viên</p>
+        </div>
+      </div>
+
+      <!-- Account Form -->
+      <form id="admin-account-form" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Mật khẩu hiện tại *</label>
+          <input type="password" id="acc-curr-password" required placeholder="Nhập mật khẩu đang dùng" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tên đăng nhập mới *</label>
+          <input type="text" id="acc-new-username" required placeholder="VD: admin hoặc tên bạn muốn" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tên hiển thị (Display Name)</label>
+          <input type="text" id="acc-new-displayname" placeholder="VD: Quản Trị Viên" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Mật khẩu mới (bỏ trống nếu không đổi)</label>
+          <input type="password" id="acc-new-password" placeholder="Nhập mật khẩu mới (tối thiểu 4 ký tự)" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Xác nhận mật khẩu mới</label>
+          <input type="password" id="acc-confirm-password" placeholder="Nhập lại mật khẩu mới" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+        </div>
+
+        <div id="account-error-msg" class="hidden p-2.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-semibold"></div>
+
+        <div class="pt-2 flex items-center space-x-3">
+          <button type="button" id="account-cancel-btn" class="w-1/3 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-all">
+            Hủy bỏ
+          </button>
+          <button type="submit" id="account-submit-btn" class="w-2/3 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-md shadow-amber-500/20 flex items-center justify-center space-x-2 transition-all">
+            <span>Lưu Thay Đổi</span>
+          </button>
+        </div>
       </form>
     </div>
   </div>

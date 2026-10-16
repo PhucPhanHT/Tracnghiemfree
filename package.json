@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
+    "build": "echo 'Build successful'",
+    "change-admin": "node change_admin.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

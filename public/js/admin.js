@@ -102,6 +102,19 @@ const AdminController = {
     const logoutBtn = document.getElementById('admin-logout-btn');
     logoutBtn?.addEventListener('click', () => this.handleLogout());
 
+    // Admin Change Account button & modal
+    const changeAccBtn = document.getElementById('admin-change-account-btn');
+    changeAccBtn?.addEventListener('click', () => this.showAccountModal());
+
+    const accCloseBtn = document.getElementById('account-modal-close-btn');
+    accCloseBtn?.addEventListener('click', () => this.closeAccountModal());
+
+    const accCancelBtn = document.getElementById('account-cancel-btn');
+    accCancelBtn?.addEventListener('click', () => this.closeAccountModal());
+
+    const accForm = document.getElementById('admin-account-form');
+    accForm?.addEventListener('submit', (e) => this.handleChangeAccount(e));
+
     // Admin Login Form
     const loginForm = document.getElementById('admin-login-form');
     loginForm?.addEventListener('submit', (e) => this.handleLogin(e));
@@ -205,6 +218,112 @@ const AdminController = {
     const displayEl = document.getElementById('admin-user-display');
     if (displayEl && user) {
       displayEl.textContent = `${user.displayName || 'Quản Trị Viên'} (${user.username})`;
+    }
+  },
+
+  showAccountModal() {
+    const modal = document.getElementById('admin-account-modal');
+    const errEl = document.getElementById('account-error-msg');
+    if (errEl) errEl.classList.add('hidden');
+
+    const currUser = this.currentUser || { username: 'admin', displayName: 'Quản Trị Viên' };
+    const usernameInput = document.getElementById('acc-new-username');
+    const displayInput = document.getElementById('acc-new-displayname');
+    const currPwdInput = document.getElementById('acc-curr-password');
+    const newPwdInput = document.getElementById('acc-new-password');
+    const confirmPwdInput = document.getElementById('acc-confirm-password');
+
+    if (usernameInput) usernameInput.value = currUser.username || '';
+    if (displayInput) displayInput.value = currUser.displayName || '';
+    if (currPwdInput) currPwdInput.value = '';
+    if (newPwdInput) newPwdInput.value = '';
+    if (confirmPwdInput) confirmPwdInput.value = '';
+
+    if (modal) modal.classList.remove('hidden');
+  },
+
+  closeAccountModal() {
+    const modal = document.getElementById('admin-account-modal');
+    if (modal) modal.classList.add('hidden');
+  },
+
+  async handleChangeAccount(e) {
+    e.preventDefault();
+    const currPassword = document.getElementById('acc-curr-password')?.value;
+    const newUsername = document.getElementById('acc-new-username')?.value.trim();
+    const newDisplayName = document.getElementById('acc-new-displayname')?.value.trim();
+    const newPassword = document.getElementById('acc-new-password')?.value;
+    const confirmPassword = document.getElementById('acc-confirm-password')?.value;
+    const errEl = document.getElementById('account-error-msg');
+    const submitBtn = document.getElementById('account-submit-btn');
+
+    if (!currPassword) {
+      if (errEl) {
+        errEl.textContent = 'Vui lòng nhập mật khẩu hiện tại để xác minh danh tính.';
+        errEl.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (!newUsername) {
+      if (errEl) {
+        errEl.textContent = 'Tên đăng nhập mới không được để trống.';
+        errEl.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (newPassword) {
+      if (newPassword.length < 4) {
+        if (errEl) {
+          errEl.textContent = 'Mật khẩu mới phải có ít nhất 4 ký tự.';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        if (errEl) {
+          errEl.textContent = 'Mật khẩu mới và mật khẩu xác nhận không khớp.';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Đang cập nhật...</span>';
+    }
+
+    try {
+      const res = await API.changeAdminAccount({
+        currentPassword: currPassword,
+        newUsername,
+        newDisplayName,
+        newPassword: newPassword || undefined
+      });
+
+      if (res.success) {
+        this.currentUser = res.user;
+        this.updateAdminUserDisplay(res.user);
+        this.closeAccountModal();
+        showToast('Cập nhật tài khoản quản trị thành công!', 'success');
+      } else {
+        if (errEl) {
+          errEl.textContent = res.error || 'Không thể cập nhật tài khoản.';
+          errEl.classList.remove('hidden');
+        }
+      }
+    } catch (err) {
+      if (errEl) {
+        errEl.textContent = 'Lỗi kết nối máy chủ: ' + err.message;
+        errEl.classList.remove('hidden');
+      }
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Lưu Thay Đổi</span>';
+      }
     }
   },
 
