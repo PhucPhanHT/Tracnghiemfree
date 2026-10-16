@@ -35,7 +35,7 @@ if (isPg) {
       const parsed = new URL(connStr);
       if (parsed.hostname.startsWith('db.') && parsed.hostname.endsWith('.supabase.co')) {
         const projectRef = parsed.hostname.split('.')[1];
-        const region = process.env.SUPABASE_REGION || (projectRef === 'mflrfyibkqltrasjvhap' ? 'ap-northeast-1' : 'ap-southeast-1');
+        const region = process.env.SUPABASE_REGION || 'ap-northeast-1';
         parsed.hostname = `aws-0-${region}.pooler.supabase.com`;
         parsed.port = '6543';
         if (!parsed.username.includes('.')) {
