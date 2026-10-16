@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: tracnghiemfree
+    env: node
+    plan: free
+    buildCommand: npm install && npm rebuild sqlite3 --build-from-source
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
