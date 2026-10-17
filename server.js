@@ -66,7 +66,8 @@ function requireAdminAuth(req, res, next) {
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Health check endpoint for keep-alive pings (Cron-job.org / UptimeRobot)
-app.get('/health', (req, res) => {
+// Matches /health, //health, /health/, etc.
+app.all(/^\/+health\/?$/i, (req, res) => {
   res.status(200).send('OK');
 });
 
