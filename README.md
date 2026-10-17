@@ -1,190 +1,165 @@
-# UniPrep - Nền Tảng Luyện Thi & Trắc Nghiệm Trực Tuyến
+# 🎓 UniPrep - Nền Tảng Luyện Thi & Trắc Nghiệm Trực Tuyến Thông Minh
 
-> Hệ thống luyện thi trắc nghiệm trực tuyến hiện đại, chuẩn UI/UX, hỗ trợ 2 chế độ **Luyện tập** (giải thích AI tức thì) & **Kiểm tra** (bấm giờ chấm điểm), tự động tráo đề ngẫu nhiên, chế độ Sáng/Tối (Dark Mode), tích hợp SQLite Database và trang Dashboard Admin tải đề tự động từ file Word (.docx).
+[![Node.js Version](https://img.shields.io/badge/Node.js-v18%2B-green.svg)](https://nodejs.org/)
+[![Database](https://img.shields.io/badge/Database-SQLite%20%7C%20PostgreSQL-blue.svg)](https://www.sqlite.org/)
+[![Deployment](https://img.shields.io/badge/Deploy-Render.com-black.svg)](https://render.com/)
+[![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
+
+> **UniPrep** là hệ thống luyện thi trắc nghiệm trực tuyến toàn diện, hiện đại, chuẩn UI/UX Responsive trên cả **Điện thoại** và **Máy tính**. Ứng dụng tích hợp công nghệ phân tích câu hỏi tự động từ file Word (`.docx`), hỗ trợ chế độ **Luyện tập có AI phân tích đúng/sai tức thì**, **Kiểm tra tính điểm thang 10**, **Gộp nhiều đề thi thông minh**, hỗ trợ đa cơ sở dữ liệu (**SQLite & PostgreSQL**) và cơ chế giữ server hoạt động 24/7 trên Render.
 
 ---
 
 ## 📑 Mục Lục
 1. [🌟 Tính Năng Nổi Bật](#-tính-năng-nổi-bật)
-2. [📁 Bản Đồ Cấu Trúc Mã Nguồn (Code Structure)](#-bản-đồ-cấu-trúc-mã-nguồn-code-structure)
-3. [🧩 Chi Tiết Chức Năng Của Từng Tệp Tin](#-chi-tiết-chức-năng-của-từng-tệp-tin)
-4. [🗄️ Cấu Trúc Cơ Sở Dữ Liệu (SQLite Schema)](#️-cấu-trúc-cơ-sở-dữ-liệu-sqlite-schema)
-5. [🔄 Các Luồng Hoạt Động Chính (Lifecycle & Flows)](#-các-luồng-hoạt-động-chính-lifecycle--flows)
-6. [🔐 Hướng Dẫn Đổi Tài Khoản & Mật Khẩu Quản Trị (Admin)](#-hướng-dẫn-đổi-tài-khoản--mật-khẩu-quản-trị-admin)
-7. [🚀 Cài Đặt & Chạy Ứng Dụng](#-cài-đặt--chạy-ứng-dụng)
-8. [☁️ Hướng Dẫn Triển Khai (Deploy lên Netlify)](#️-hướng-dẫn-triển-khai-deploy-lên-netlify)
+2. [📁 Bản Đồ Cấu Trúc Dự Án (Repository Structure)](#-bản-đồ-cấu-trúc-dự-án-repository-structure)
+3. [🧩 Chi Tiết Chức Năng Của Từng Thành Phần](#-chi-tiết-chức-năng-của-từng-thành-phần)
+4. [🗄️ Cấu Trúc Cơ Sở Dữ Liệu (Database Schema)](#️-cấu-trúc-cơ-sở-dữ-liệu-database-schema)
+5. [🔄 Các Luồng Nghiệp Vụ Chính (Business Flows)](#-các-luồng-nghiệp-vụ-chính-business-flows)
+6. [📱 Trải Nghiệm Giao Diện Điện Thoại (Mobile UX)](#-trải-nghiệm-giao-diện-điện-thoại-mobile-ux)
+7. [🚀 Cài Đặt & Chạy Ứng Dụng Dưới Local](#-cài-đặt--chạy-ứng-dụng-dưới-local)
+8. [🔐 Hướng Dẫn Đổi Tài Khoản & Mật Khẩu Admin](#-hướng-dẫn-đổi-tài-khoản--mật-khẩu-admin)
+9. [☁️ Triển Khai Lên Render & Cấu Hình Giữ Server 24/7](#️-triển-khai-lên-render--cấu-hình-giữ-server-247)
+10. [📦 Chuyển Đổi Dữ Liệu SQLite sang PostgreSQL](#-chuyển-đổi-dữ-liệu-sqlite-sang-postgresql)
 
 ---
 
 ## 🌟 Tính Năng Nổi Bật
 
-- **Kho đề thi đa dạng & phân loại môn học**:
-  - Hỗ trợ đầy đủ các môn đại cương: *Triết học Mác-Lênin*, *Kinh tế Chính trị*, *Toán Cao cấp*, *Vật lý Đại cương*, *Lịch sử Đảng*...
-  - **Trọn bộ môn Quốc phòng An ninh**:
-    - **Học phần 1**: Bài 1 đến Bài 8 + Đề thi Tổng hợp Full 211 câu.
-    - **Học phần 2**: Bài 1 đến Bài 7 + Đề thi Tổng hợp Full 210 câu.
-- **2 Chế độ thi chuyên nghiệp**:
-  - 📖 **Chế độ Luyện tập (Practice Mode)**: Chọn đáp án hiển thị ngay đúng/sai, lời giải thích chi tiết và gợi ý mở rộng từ AI.
-  - ⏱️ **Chế độ Kiểm tra (Exam Mode)**: Đồng hồ đếm ngược, bảng danh sách câu hỏi theo dõi trạng thái đã làm, nộp bài tính điểm thang 10, phân loại câu sai và làm lại câu sai.
-- 🔀 **Tự động tráo câu hỏi (Fisher-Yates Shuffle)**: Mỗi lần bắt đầu làm đề hoặc bấm *"Tráo câu"*, hệ thống xáo trộn ngẫu nhiên thứ tự câu hỏi để chống học vẹt.
-- 🌓 **Giao diện Sáng / Tối (Dark / Light Mode)**: Chuyển đổi linh hoạt 1-click, lưu cấu hình vào `localStorage`.
-- 📄 **Trang Quản trị Admin thông minh**:
-  - Đăng nhập bảo mật qua Token và SHA-256.
-  - **Tải lên đề thi trực tiếp từ file Word (`.docx`)**: Tự động bóc tách câu hỏi, 4 đáp án A-B-C-D, đáp án đúng và lời giải bằng AI Text Parser.
-  - Hỗ trợ dán văn bản thô, nhập form thủ công hoặc tải file JSON.
-  - Sửa đề thi, xóa đề, xem lịch sử làm bài và thống kê điểm số học viên.
-  - **Đổi tài khoản và mật khẩu Admin trực tiếp trên giao diện hoặc qua dòng lệnh CLI**.
+### 1. Kho Đề Thi Phong Phú & Phân Loại Môn Học
+- **Trọn bộ Ngân hàng câu hỏi Quân sự - Quốc phòng An ninh (QPAN)**:
+  - **Học phần 1**: Bài 1 đến Bài 8 + Đề thi tổng hợp Full 211 câu.
+  - **Học phần 2**: Bài 1 đến Bài 7 + Đề thi tổng hợp Full 210 câu.
+- **Các môn đại cương đại học**: *Triết học Mác - Lênin*, *Kinh tế Chính trị*, *Toán Cao cấp*, *Vật lý Đại cương*, *Lịch sử Đảng*, *Tin học*...
+- Hỗ trợ thanh tìm kiếm đề thi tức thì và thanh danh mục (Category Pills) cuộn ngang mượt mà.
+
+### 2. Hai Chế Độ Thi Chuyên Sâu
+- 📖 **Chế độ Luyện tập (Practice Mode)**:
+  - Chọn đáp án hiển thị ngay kết quả: **Xanh lá (Đúng)** hoặc **Đỏ hồng (Sai)**.
+  - **Hộp Phân tích AI độc quyền**: Giải thích rõ ràng *"Vì sao đáp án bạn chọn lại sai"*.
+  - Hai Accordion mở rộng: **Giải thích kiến thức chi tiết** và **Gemini AI · Mẹo nhớ từ khóa nhanh**.
+  - Tích hợp khung chat tương tác **"Hỏi thêm AI"** với các gợi ý nhanh (lấy ví dụ thực tế, phân biệt đúng - sai).
+- ⏱️ **Chế độ Kiểm tra (Exam Mode)**:
+  - Đồng hồ đếm ngược thời gian thực, bảng theo dõi số lượng câu đã làm / chưa làm.
+  - Nộp bài tính điểm chính xác theo thang điểm 10.
+  - Tổng kết chi tiết số câu đúng, câu sai, câu bỏ qua.
+  - **Nút hành động nhanh sau khi thi**: *"Làm lại các câu sai ngay"* (tự động đảo vị trí các câu làm sai để củng cố kiến thức).
+
+### 3. Tính Năng Gộp Đề Thi Thông Minh (Exam Combiner)
+- **Dành cho Học viên**: Chọn từ 2 đến nhiều đề thi bất kỳ để gộp thành 1 đề tổng hợp ôn luyện, tùy chọn số lượng câu hỏi và thời gian thi.
+- **Dành cho Admin**: Tính năng gộp vĩnh viễn các bộ đề vào cơ sở dữ liệu với các công cụ:
+  - Lọc trùng lặp câu hỏi (Deduplication).
+  - Tự động xáo trộn ngẫu nhiên câu hỏi (Fisher-Yates Shuffle).
+  - Thanh thao tác hàng loạt (Batch Actions) trong danh sách đề thi.
+
+### 4. Tùy Chỉnh Thời Gian Linh Hoạt
+- Modal chọn thời lượng trước khi bắt đầu: **15 phút, 30 phút, 45 phút, 60 phút, 90 phút** hoặc **Không giới hạn (Tự do)**.
+- Bổ sung thời gian trực tiếp trong lúc đang làm bài: Thêm **+5 phút**, **+15 phút** hoặc chuyển sang **Tự do** chỉ với 1 chạm mà không làm gián đoạn bài thi.
+
+### 5. Giao Diện Tối Ưu Toàn Diện Cho Điện Thoại (Mobile Responsive)
+- Cuộn dọc xem nối tiếp toàn bộ câu hỏi trên di động, giữ nguyên vị trí cuộn khi xem lời giải.
+- Huy hiệu số thứ tự tròn màu xanh ngọc đặt cạnh nội dung câu hỏi.
+- Bảng danh sách câu hỏi (Question Palette) dạng **Bottom Sheet 6 cột** trực quan, chạm để nhảy nhanh đến câu cần làm.
+- Trang Admin trên điện thoại tự động chuyển đổi sang giao diện dạng thẻ (Card View) kèm checkbox chọn tất cả tiện dụng.
+
+### 6. Bảng Quản Trị Admin Tự Động Hóa
+- **Tải lên đề thi trực tiếp từ file Word (`.docx`)**: Tự động bóc tách tên đề, số câu, 4 đáp án A-B-C-D, đáp án đúng và lời giải chi tiết qua AI Text Parser.
+- Hỗ trợ dán văn bản thô, nhập form thủ công hoặc tải file JSON.
+- Đổi tài khoản và mật khẩu Admin trực tiếp trên giao diện hoặc qua dòng lệnh CLI.
+- Xem thống kê số lượt làm bài, điểm trung bình và lịch sử thi của học viên.
+
+### 7. Hỗ Trợ Đa Cơ Sở Dữ Liệu (SQLite & PostgreSQL)
+- Mặc định chạy SQLite nhẹ nhàng trên máy cục bộ (`data/uniprep.db`).
+- Tự động chuyển đổi sang PostgreSQL (Neon, Supabase, Render Postgres) khi cấu hình biến môi trường `DATABASE_URL`.
+- Cung cấp sẵn script chuyển đổi dữ liệu tự động `migrate_to_postgres.js`.
+
+### 8. Endpoint Giữ Server Hoạt Động 24/7 (`/health`)
+- Cung cấp endpoint `/health` siêu nhẹ, phản hồi `OK (200)` trong vài mili-giây, không truy vấn database, giúp các dịch vụ như **Cron-job.org** hay **UptimeRobot** giữ máy chủ Render miễn phí không bị sleep.
 
 ---
 
-## 📁 Bản Đồ Cấu Trúc Mã Nguồn (Code Structure)
+## 📁 Bản Đồ Cấu Trúc Dự Án (Repository Structure)
 
 ```
 d:\Project\Tracnghiemfree/
 │
-├── server.js                   # Node.js Express server & toàn bộ REST API
-├── db.js                       # Quản lý SQLite database, tạo bảng & dữ liệu mẫu
+├── server.js                   # Node.js Express Server, REST API & route /health
+├── db.js                       # Module kết nối Database (hỗ trợ kép SQLite & PostgreSQL)
 ├── parser.js                   # Bộ phân tích văn bản thông minh (Regex & AI Parser)
 ├── change_admin.js             # Công cụ CLI đổi tài khoản & mật khẩu Admin
+├── migrate_to_postgres.js      # Script chuyển toàn bộ dữ liệu từ SQLite sang PostgreSQL
+├── seed_qpan_lessons.js        # Script nạp dữ liệu QPAN Học phần 1 (Bài 1 - 8 + Đề tổng hợp)
+├── seed_qpan_hp2.js            # Script nạp dữ liệu QPAN Học phần 2 (Bài 1 - 7 + Đề tổng hợp)
 │
 ├── data/
-│   └── uniprep.db              # File cơ sở dữ liệu SQLite lưu trữ thực tế
+│   └── uniprep.db              # File cơ sở dữ liệu SQLite cục bộ
 │
-├── public/                     # Frontend Single Page Application (SPA)
-│   ├── index.html              # HTML duy nhất chứa toàn bộ màn hình (Home, Exam, Admin)
-│   ├── favicon.svg             # Logo mũ tốt nghiệp UniPrep
+├── public/                     # Giao diện người dùng Single Page Application (SPA)
+│   ├── index.html              # HTML tổng hợp các view (Home, Exam, Admin, Modals)
+│   ├── favicon.svg             # Logo mũ cử nhân UniPrep
 │   ├── css/
-│   │   └── style.css           # Tùy biến CSS, animation, scrollbar & Dark Mode
+│   │   └── style.css           # Custom styles, animation & Dark Mode utilities
 │   └── js/
-│       ├── api.js              # Module gọi API (Fetch client, quản lý Bearer Token)
-│       ├── app.js              # Router SPA, danh mục môn học, tìm kiếm & Theme Dark/Light
-│       ├── exam.js             # Engine làm bài: đếm giờ, tráo đề, chọn đáp án, nộp bài & modal kết quả
-│       └── admin.js            # Controller quản trị: đăng nhập, đổi mật khẩu, upload Word/Text, CRUD đề
+│       ├── api.js              # Client API wrapper (Fetch HTTP requests & Token management)
+│       ├── app.js              # Controller chính: SPA router, danh mục, gộp đề, theme sáng/tối
+│       ├── exam.js             # Engine làm bài: đếm giờ, tráo đề, chấm điểm, lời giải AI, palette
+│       └── admin.js            # Controller quản trị: đăng nhập, upload Word, sửa/xóa đề, gộp đề
 │
-├── netlify/
-│   └── functions/
-│       └── api.js              # Serverless wrapper để chạy Express trên Netlify Functions
-├── netlify.toml                # File cấu hình định tuyến redirects & headers của Netlify
+├── hp1_parsed_questions.json   # Bộ dữ liệu câu hỏi chuẩn hóa QPAN HP1 (211 câu)
+├── hp2_parsed_questions.json   # Bộ dữ liệu câu hỏi chuẩn hóa QPAN HP2 (210 câu)
+├── CAU_HOI_TRAC_NGHIEM_HP1...  # File Word gốc môn QPAN HP1
+├── CAU_HOI_TRAC_NGHIEM_HP2...  # File Word gốc môn QPAN HP2
 │
-├── seed_qpan_lessons.js        # Script nạp dữ liệu QPAN Học phần 1 (Bài 1 - 8 + Full)
-├── seed_qpan_hp2.js            # Script nạp dữ liệu QPAN Học phần 2 (Bài 1 - 7 + Full)
-├── hp1_parsed_questions.json   # Dữ liệu JSON đã chuẩn hóa của HP1 (211 câu)
-├── hp2_parsed_questions.json   # Dữ liệu JSON đã chuẩn hóa của HP2 (210 câu)
-├── CAU_HOI_TRAC_NGHIEM_HP1...  # File Word gốc HP1
-├── CAU_HOI_TRAC_NGHIEM_HP2...  # File Word gốc HP2
-│
-├── package.json                # Định nghĩa thư viện (Express, SQLite3, Mammoth, Multer...)
-└── README.md                   # Tài liệu hướng dẫn sử dụng và giải thích kiến trúc
+├── Dockerfile                  # Cấu hình container Docker cho server
+├── render.yaml                 # Cấu hình Blueprint tự động triển khai trên Render.com
+├── netlify.toml                # Cấu hình định tuyến dự phòng Netlify
+├── package.json                # Thư viện phụ thuộc (Express, pg, sqlite3, mammoth, multer...)
+├── GEMINI.md                   # Quy tắc dự án dành cho trợ lý AI Antigravity
+└── README.md                   # Tài liệu hướng dẫn sử dụng và kiến trúc hệ thống
 ```
 
 ---
 
-## 🧩 Chi Tiết Chức Năng Của Từng Tệp Tin
+## 🧩 Chi Tiết Chức Năng Của Từng Thành Phần
 
-### 1. `server.js` (Backend REST API)
-- Khởi chạy web server Express tại cổng `3000`.
-- Thiết lập middleware: xử lý JSON body, phục vụ file tĩnh thư mục `public/`, upload file qua `multer`.
-- **Cụm API Quản trị viên (Admin Auth & Account)**:
-  - `POST /api/admin/login`: Xác thực đăng nhập bằng mã băm SHA-256, sinh phiên làm việc `Bearer Token` có thời hạn 24 giờ.
-  - `GET /api/admin/me`: Kiểm tra phiên đăng nhập hiện tại từ Token.
-  - `POST /api/admin/change-account`: Đổi tên đăng nhập, tên hiển thị và mật khẩu Quản trị viên (yêu cầu mật khẩu cũ để xác thực).
-  - `POST /api/admin/logout`: Hủy bỏ phiên Token trong bộ nhớ máy chủ.
-- **Cụm API Đề thi & Câu hỏi (Public & Admin)**:
-  - `GET /api/categories`: Lấy danh sách môn học kèm số lượng đề thi tương ứng.
-  - `GET /api/exams`: Lấy danh sách đề thi (hỗ trợ lọc theo danh mục hoặc từ khóa tìm kiếm).
-  - `GET /api/exams/:id`: Lấy chi tiết đề thi và toàn bộ danh sách câu hỏi.
-  - `POST /api/exams`: Đăng đề thi mới (Admin).
-  - `PUT /api/exams/:id`: Cập nhật nội dung đề thi (Admin).
-  - `DELETE /api/exams/:id`: Xóa đề thi (Admin).
-- **Cụm API Phân tích Word & AI**:
-  - `POST /api/admin/upload-word`: Nhận file `.docx`, dùng thư viện `mammoth` đọc văn bản thô và chuyển tiếp vào `parser.js` để tự động bóc tách câu hỏi.
-  - `POST /api/ai/ask`: Cung cấp phân tích chi tiết, giải thích đơn giản hoặc đưa ra ví dụ thực tế cho câu hỏi.
-- **Cụm API Làm bài & Thống kê**:
-  - `POST /api/submissions`: Tiếp nhận bài thi nộp từ học viên, lưu điểm số, câu đúng, câu sai vào bảng `submissions`.
-  - `GET /api/admin/stats`: Trả về số liệu tổng quan (Tổng số đề, Tổng số câu hỏi, Lượt làm bài, Điểm trung bình).
+### 1. `server.js` (Backend API Engine)
+- Chạy trên nền tảng **Express.js**, phục vụ các REST API:
+  - **Keep-Alive**: Route `ALL /health` (và các biến thể `//health`, `/health/`) phục vụ ping uptime.
+  - **Quản trị viên**: `POST /api/admin/login`, `GET /api/admin/me`, `POST /api/admin/change-account`, `POST /api/admin/logout`.
+  - **Kho đề thi**: `GET /api/categories`, `GET /api/exams`, `GET /api/exams/:id`, `POST /api/exams`, `PUT /api/exams/:id`, `DELETE /api/exams/:id`.
+  - **Gộp đề thi**: `POST /api/exams/combine` (tạo đề thi ảo làm ngay), `POST /api/admin/merge-exams` (gộp lưu vào database).
+  - **Phân tích đề**: `POST /api/admin/upload-word` (đọc file `.docx` qua `mammoth`), `POST /api/admin/parse-text`.
+  - **Trợ lý AI**: `POST /api/ai/ask` (giải thích chi tiết, đặt câu hỏi cho Gemini AI).
+  - **Nộp bài**: `POST /api/submissions`, `GET /api/admin/submissions`, `GET /api/admin/stats`.
 
----
+### 2. `db.js` (Dual Database Adapter)
+- Tự động phát hiện môi trường:
+  - Nếu có biến môi trường `DATABASE_URL` (bắt đầu bằng `postgres://` hoặc `postgresql://`), hệ thống kết nối qua `pg.Pool` với SSL.
+  - Nếu không có, hệ thống sử dụng `sqlite3.Database` lưu tại `data/uniprep.db`.
+- Tự động khởi tạo cấu trúc bảng (`exams`, `questions`, `submissions`, `admin_users`) và tạo tài khoản admin mặc định nếu bảng trống.
 
-### 2. `db.js` (Cơ Sở Dữ Liệu SQLite)
-- Khởi tạo kết nối đến file cơ sở dữ liệu `data/uniprep.db`.
-- Cung cấp các hàm Promise helper bọc quanh SQLite3:
-  - `run(sql, params)`: Thực thi câu lệnh `INSERT`, `UPDATE`, `DELETE`.
-  - `get(sql, params)`: Lấy 1 bản ghi duy nhất.
-  - `all(sql, params)`: Lấy danh sách nhiều bản ghi.
-- Khởi tạo cấu trúc các bảng (`initDb`): `exams`, `questions`, `submissions`, `admin_users`.
-- Tự động nạp tài khoản admin mặc định (`admin` / `admin123`) và các bộ đề mẫu ban đầu nếu cơ sở dữ liệu còn trống.
+### 3. `public/js/exam.js` (Exam Engine)
+- Điều phối toàn bộ vòng đời của một bài thi:
+  - Thuật toán xáo trộn Fisher-Yates (`shuffleArray`).
+  - Quản lý đồng hồ bấm giờ đếm ngược hoặc tự do (`initTimer`, `addExtraTime`).
+  - Hiển thị đáp án đúng/sai, hộp giải thích vì sao sai và accordion mẹo nhớ từ khóa.
+  - Đồng bộ trạng thái bài làm với thanh Header, phụ đề trạng thái và bảng Question Palette.
+  - Chấm điểm bài thi và khởi chạy Modal kết quả.
+
+### 4. `public/js/app.js` (App Router & View Controller)
+- Điều hướng các màn hình: Trang chủ (`#view-home`), Làm bài (`#view-exam`), Quản trị (`#view-admin`).
+- Xử lý tìm kiếm đề thi và lọc theo danh mục môn học.
+- Quản lý modal chọn thời gian làm bài trước khi thi (`promptStartExam`).
+- Quản lý modal Gộp đề thi dành cho học viên (`openCombineModal`).
+- Quản lý chế độ giao diện Sáng / Tối (Dark / Light Mode) qua `localStorage`.
 
 ---
 
-### 3. `parser.js` (Bộ Phân Tích Đề Thi Tự Động)
-- Sử dụng các biểu thức chính quy (Regular Expressions) mạnh mẽ để nhận diện cấu trúc đề thi từ văn bản Word hoặc văn bản dán:
-  - Nhận diện câu hỏi: `Câu 1:`, `Câu 1.`, `Câu 1 -`...
-  - Nhận diện 4 phương án: `A.`, `B.`, `C.`, `D.` hoặc `A)`, `A,` (hỗ trợ cả các phương án nằm cùng dòng).
-  - Nhận diện đáp án đúng: `Đáp án: A`, `Key: B`, `Đ/A: C`...
-  - Nhận diện phần giải thích: `Giải thích: ...`, `Hướng dẫn giải: ...`.
-- Tự động phát hiện tiêu đề bài thi ở những dòng đầu tiên của tài liệu.
-
----
-
-### 4. `change_admin.js` (Công Cụ Quản Lý Tài Khoản Quản Trị Bằng Dòng Lệnh)
-- Cho phép người quản trị đổi tài khoản và mật khẩu trực tiếp từ terminal mà không cần thông qua trình duyệt web.
-- Hỗ trợ xử lý trường hợp quên mật khẩu quản trị.
-- Tự động mã hóa mật khẩu mới sang chuẩn SHA-256 và cập nhật vào bảng `admin_users`.
-
----
-
-### 5. `public/index.html` (Frontend Single Page Application)
-Được cấu trúc theo mô hình **Single Page Application (SPA)**, không cần reload trang khi chuyển đổi:
-- **Header chung**: Logo UniPrep, nút chuyển đổi danh mục, đồng hồ đếm giờ, nút nộp bài, nút Dark/Light Mode.
-- **Section 1 - `#view-home`**: Màn hình trang chủ hiển thị bộ lọc danh mục thuốc (Pills), thanh tìm kiếm và lưới thẻ đề thi (Exam Cards).
-- **Section 2 - `#view-exam`**: Màn hình làm bài thi gồm cột câu hỏi bên trái (chọn đáp án, xem giải thích AI) và bảng danh sách câu hỏi (Question Palette) bên phải.
-- **Section 3 - `#view-admin`**: Bảng điều khiển quản trị gồm hàng thống kê chỉ số, tab tải đề (Word / Văn bản / Thủ công / JSON), bảng danh sách đề thi và lịch sử làm bài.
-- **Hệ thống Modal popups**:
-  - `#result-modal`: Modal tổng kết điểm thi, xem câu sai, nút làm lại câu sai.
-  - `#admin-login-modal`: Modal đăng nhập Quản trị viên.
-  - `#admin-account-modal`: Modal đổi tài khoản và mật khẩu Quản trị viên.
-
----
-
-### 6. `public/js/app.js` (Điều Phối Giao Diện & Bộ Lọc)
-- **Quản lý chuyển đổi View**: Hàm `App.showView('home' | 'exam' | 'admin')` kiểm soát việc ẩn/hiện các màn hình một cách mượt mà.
-- **Xử lý danh mục & Tìm kiếm**: Tải danh sách môn học, lắng nghe sự kiện bấm chọn danh mục hoặc nhập ô tìm kiếm để lọc đề thi.
-- **Quản lý Theme Sáng / Tối (Dark / Light)**: Đọc trạng thái từ `localStorage`, tự động gán class `dark` vào thẻ `<html>` và cập nhật biểu tượng mặt trời / mặt trăng.
-
----
-
-### 7. `public/js/exam.js` (Engine Làm Bài & Chấm Điểm)
-- **Quản lý trạng thái bài thi (`state`)**: Đề thi hiện tại, danh sách câu hỏi, câu hỏi đang chọn, câu trả lời của học viên, chế độ làm bài (`practice` hoặc `exam`).
-- **Thuật toán tráo câu hỏi (`shuffleExam`)**: Ứng dụng thuật toán xáo trộn ngẫu nhiên Fisher-Yates để đảo thứ tự câu hỏi và đồng bộ lại bảng Question Palette.
-- **Chế độ Luyện tập**: Bật cờ `AI giải thích ngay`, khi chọn đáp án sẽ kiểm tra ngay với đáp án chuẩn, đổi màu xanh/đỏ và hiển thị khung giải thích AI.
-- **Chế độ Kiểm tra**: Khởi động đồng hồ đếm ngược `startTimer()`, khi hết giờ hoặc bấm "Nộp bài" sẽ chấm điểm tự động và bật `#result-modal`.
-- **Làm lại câu sai**: Lọc riêng danh sách các câu làm sai để học viên luyện tập lại trọng tâm.
-
----
-
-### 8. `public/js/admin.js` (Điều Khiển Trang Quản Trị)
-- Quản lý phiên làm việc Admin: Kiểm tra đăng nhập qua `API.checkAdminAuth()`, hiển thị modal đăng nhập khi chưa có quyền.
-- Quản lý kéo thả & upload file Word (`.docx`): Gửi file lên server, nhận câu hỏi đã phân tích và tự động điền vào form xem trước.
-- Hỗ trợ chế độ Sửa đề thi (`editExam`): Tải lại toàn bộ câu hỏi của đề cũ vào form chỉnh sửa để lưu đè.
-- **Modal đổi tài khoản & mật khẩu**: Thu thập dữ liệu từ `#admin-account-modal`, kiểm tra độ dài mật khẩu và gọi API cập nhật.
-
----
-
-### 9. `public/js/api.js` (Client API)
-- Đóng gói toàn bộ các hàm gọi API HTTP bằng `fetch`.
-- Tự động đính kèm header `Authorization: Bearer <token>` nếu đã đăng nhập.
-- Lưu trữ token vào `localStorage` (hoặc `sessionStorage`).
-
----
-
-## 🗄️ Cấu Trúc Cơ Sở Dữ Liệu (SQLite Schema)
-
-Cơ sở dữ liệu được lưu tại `data/uniprep.db` với 4 bảng:
+## 🗄️ Cấu Trúc Cơ Sở Dữ Liệu (Database Schema)
 
 ```mermaid
 erDiagram
     exams ||--o{ questions : "chứa (1 - N)"
-    exams ||--o{ submissions : "có lịch sử (1 - N)"
+    exams ||--o{ submissions : "lịch sử thi (1 - N)"
     
     exams {
         INTEGER id PK
@@ -234,97 +209,145 @@ erDiagram
 
 ---
 
-## 🔄 Các Luồng Hoạt Động Chính (Lifecycle & Flows)
+## 🔄 Các Luồng Nghiệp Vụ Chính (Business Flows)
 
-### 1. Luồng Người Dùng Vào Làm Bài Thi
+### 1. Luồng Học Viên Làm Bài & Luyện Tập
 ```mermaid
 flowchart TD
-    A["Trang chủ (Kho đề thi)"] -->|"Chọn Luyện tập hoặc Kiểm tra"| B["Tải chi tiết đề thi qua API /api/exams/:id"]
-    B --> C["Tự động áp dụng thuật toán Fisher-Yates tráo thứ tự câu hỏi"]
-    C --> D["Hiển thị giao diện làm bài & vẽ bảng Question Palette"]
-    D --> E{"Chế độ đã chọn?"}
-    E -->|"Luyện tập (Practice)"| F["Bấm đáp án -> Hiện ngay Đúng/Sai + Khung giải thích AI"]
-    E -->|"Kiểm tra (Exam)"| G["Đồng hồ đếm ngược chạy -> Học viên trả lời các câu"]
+    A["Trang chủ Kho đề thi"] --> B["Bấm Luyện tập hoặc Kiểm tra"]
+    B --> C["Modal chọn thời gian thi (15p, 30p, 45p, Tự do)"]
+    C --> D["Tự động tráo câu hỏi (Fisher-Yates) & Vẽ giao diện"]
+    D --> E{"Chế độ thi?"}
+    E -->|"Luyện tập"| F["Bấm đáp án -> Hiện Đúng/Sai + Khung AI giải thích vì sao sai"]
+    E -->|"Kiểm tra"| G["Đồng hồ đếm ngược -> Học viên làm bài"]
     G --> H["Bấm Nộp bài hoặc Hết giờ"]
-    H --> I["Gửi kết quả lên /api/submissions"]
-    I --> J["Hiển thị Modal Kết Quả (Điểm số, Số câu đúng/sai, Làm lại câu sai)"]
+    F --> H
+    H --> I["Chấm điểm thang 10 & Lưu vào Database"]
+    I --> J["Modal Tổng Kết: Điểm số, Thống kê đúng/sai, Nút 'Làm lại câu sai'"]
+```
+
+### 2. Luồng Gộp Đề Thi (Exam Combiner)
+```mermaid
+flowchart TD
+    A["Bấm nút 'Gộp đề thi'"] --> B["Chọn từ 2 đề thi trở lên trong danh sách"]
+    B --> C["Thiết lập thời gian & số câu hỏi tối đa"]
+    C --> D{"Đối tượng thực hiện?"}
+    D -->|"Học viên"| E["API /api/exams/combine -> Tạo đề thi tổng hợp làm ngay"]
+    D -->|"Admin"| F["API /api/admin/merge-exams -> Lọc trùng & Lưu đề mới vào Database"]
 ```
 
 ---
 
-## 🔐 Hướng Dẫn Đổi Tài Khoản & Mật Khẩu Quản Trị (Admin)
+## 📱 Trải Nghiệm Giao Diện Điện Thoại (Mobile UX)
 
-Hệ thống cung cấp **2 phương pháp tiện lợi** để thay đổi tài khoản và mật khẩu quản trị:
-
-### Cách 1: Đổi trực tiếp trên giao diện Dashboard (Khuyên dùng)
-1. Mở trình duyệt và truy cập `http://localhost:3000`.
-2. Bấm vào nút **Quản trị & Up đề** ở góc trên bên phải thanh điều hướng.
-3. Đăng nhập với tài khoản hiện tại:
-   - Tên đăng nhập mặc định: `admin`
-   - Mật khẩu mặc định: `admin123`
-4. Trên thanh tiêu đề của trang Quản trị, bấm vào nút màu vàng **🔑 Đổi tài khoản**.
-5. Trong cửa sổ hiện lên:
-   - **Mật khẩu hiện tại**: Nhập mật khẩu bạn đang dùng để xác minh danh tính.
-   - **Tên đăng nhập mới**: Nhập username bạn muốn (hoặc giữ nguyên nếu chỉ đổi mật khẩu).
-   - **Tên hiển thị**: Nhập họ tên hoặc biệt danh hiển thị trên thanh quản trị.
-   - **Mật khẩu mới**: Nhập mật khẩu mới (tối thiểu 4 ký tự).
-   - **Xác nhận mật khẩu mới**: Nhập lại mật khẩu mới.
-6. Bấm **Lưu Thay Đổi**. Hệ thống sẽ cập nhật ngay lập tức mà không cần khởi động lại server.
+| Màn hình | Tính năng tối ưu hóa |
+| :--- | :--- |
+| **Trang chủ** | Thanh tìm kiếm & nút *Gộp đề* nằm cạnh nhau; Danh mục cuộn ngang; Thẻ đề thi hỗ trợ Dark Mode hoàn chỉnh. |
+| **Làm bài thi** | Cho phép **cuộn dọc xem liên tục toàn bộ câu hỏi**; Giữ nguyên vị trí cuộn khi xem lời giải; Số thứ tự dạng huy hiệu tròn xanh nổi bật. |
+| **Thanh Sub-Header** | Tích hợp nút `[🔀 Tráo câu]`, nút mở `[⊞ Bảng câu hỏi]`, và đồng hồ `[⏱ 00:02 (Tự do)]` có thể bấm để thêm giờ làm bài. |
+| **Bảng câu hỏi** | Dạng **Bottom Sheet 6 cột** mở từ đáy màn hình, chạm để chuyển nhanh đến câu bất kỳ mà không cần cuộn trang. |
+| **Bảng Admin** | Bảng danh sách đề thi tự động chuyển thành **danh sách thẻ (Card View)** có checkbox chọn hàng loạt, nút Sửa/Thi thử/Xóa dễ thao tác. |
 
 ---
 
-### Cách 2: Đổi nhanh bằng dòng lệnh CLI (Giải quyết khi quên mật khẩu)
-Nếu bạn lỡ quên mật khẩu hoặc muốn đặt lại nhanh từ cửa sổ dòng lệnh Terminal / PowerShell:
-
-1. Mở PowerShell hoặc Terminal tại thư mục dự án `d:\Project\Tracnghiemfree`.
-2. Chạy lệnh theo cú pháp:
-   ```bash
-   node change_admin.js <tên_đăng_nhập_mới> <mật_khẩu_mới> "[tên_hiển_thị]"
-   ```
-3. **Ví dụ cụ thể**:
-   - Đặt lại về tài khoản admin thông dụng:
-     ```bash
-     node change_admin.js admin 123456
-     ```
-   - Tạo tài khoản cá nhân có mật khẩu bảo mật cao:
-     ```bash
-     node change_admin.js ban-giam-hieu MatKhauKho@2026 "Ban Khảo Thí"
-     ```
-4. Màn hình sẽ thông báo cập nhật thành công và bạn có thể đăng nhập ngay với thông tin mới.
-
----
-
-## 🚀 Cài Đặt & Chạy Ứng Dụng
+## 🚀 Cài Đặt & Chạy Ứng Dụng Dưới Local
 
 ### 1. Yêu Cầu Môi Trường
-- Máy tính đã cài đặt **Node.js** (Khuyến nghị phiên bản v18, v20 hoặc mới hơn).
+- Đã cài đặt **Node.js** (Khuyến nghị phiên bản v18, v20 hoặc mới hơn).
 
-### 2. Các Bước Khởi Chạy
-1. Mở terminal tại thư mục dự án:
+### 2. Cài Đặt & Khởi Chạy
+1. Mở cửa sổ dòng lệnh tại thư mục dự án:
    ```bash
    cd d:\Project\Tracnghiemfree
    ```
-2. Khởi động ứng dụng:
+2. Cài đặt các gói phụ thuộc (nếu chưa cài):
+   ```bash
+   npm install
+   ```
+3. Khởi chạy ứng dụng:
    ```bash
    npm start
+   # hoặc: node server.js
    ```
-   *(Hoặc chạy lệnh: `node server.js`)*
-3. Mở trình duyệt web và truy cập địa chỉ:
+4. Mở trình duyệt web và truy cập:
    ```text
    http://localhost:3000
    ```
 
 ---
 
-## ☁️ Hướng Dẫn Triển Khai (Deploy lên Netlify)
+## 🔐 Hướng Dẫn Đổi Tài Khoản & Mật Khẩu Admin
 
-Dự án đã được cấu hình sẵn tệp [netlify.toml](file:///d:/Project/Tracnghiemfree/netlify.toml) và thư mục [netlify/functions/api.js](file:///d:/Project/Tracnghiemfree/netlify/functions/api.js):
+### Cách 1: Đổi trực tiếp trên giao diện Dashboard
+1. Truy cập trang web và bấm nút **Quản trị & Up đề** ở góc trên thanh điều hướng.
+2. Đăng nhập với thông tin mặc định:
+   - Tên đăng nhập: `admin`
+   - Mật khẩu: `admin123`
+3. Trên thanh thông tin tài khoản, bấm nút **🔑 Đổi tài khoản**.
+4. Nhập mật khẩu hiện tại, tên đăng nhập mới, tên hiển thị và mật khẩu mới rồi bấm **Lưu thay đổi**.
 
-1. **Cấu hình Netlify**:
-   - **Build command**: `npm install`
-   - **Publish directory**: `public`
-   - **Functions directory**: `netlify/functions`
-2. **Quy tắc điều hướng (Redirects)**:
-   - Các yêu cầu đến `/api/*` sẽ được tự động chuyển hướng đến serverless function `/.netlify/functions/api/:splat`.
-   - Các yêu cầu trang web còn lại sẽ trả về giao diện Single Page App tại `index.html`.
-3. Đẩy mã nguồn lên kho chứa GitHub / GitLab và kết nối với Netlify để hoàn tất quá trình xuất bản tự động (CI/CD).
+### Cách 2: Đổi nhanh bằng dòng lệnh CLI (Khi quên mật khẩu)
+Mở terminal tại thư mục dự án và chạy:
+```bash
+node change_admin.js <tên_đăng_nhập_mới> <mật_khẩu_mới> "[tên_hiển_thị]"
+```
+*Ví dụ:*
+```bash
+node change_admin.js admin 123456 "Quản Trị Viên"
+```
+
+---
+
+## ☁️ Triển Khai Lên Render & Cấu Hình Giữ Server 24/7
+
+### 1. Triển Khai Lên Render.com
+1. Đẩy mã nguồn lên tài khoản GitHub của bạn.
+2. Đăng nhập vào [Render Dashboard](https://dashboard.render.com/) và chọn **New +** -> **Web Service**.
+3. Kết nối với kho chứa GitHub `Tracnghiemfree`.
+4. Cấu hình dịch vụ:
+   - **Name**: `tracnghiemfree` (hoặc tên tùy chọn).
+   - **Environment**: `Node`.
+   - **Build Command**: `npm install`.
+   - **Start Command**: `node server.js`.
+   - **Plan**: `Free`.
+5. Bấm **Create Web Service**. Sau vài phút, bạn sẽ nhận được đường dẫn ứng dụng dạng:
+   ```text
+   https://ten-app-cua-ban.onrender.com
+   ```
+
+### 2. Cấu Hình Cron-job.org Để Giữ Server Luôn Thức (Không Bị Sleep)
+Render bản miễn phí sẽ tự động tắt máy chủ nếu không có truy cập trong 15 phút. Sử dụng endpoint `/health` siêu nhẹ để giữ server luôn sẵn sàng:
+
+1. Đăng ký tài khoản miễn phí tại [cron-job.org](https://cron-job.org).
+2. Vào mục **Cronjobs** -> Bấm **Create cronjob**.
+3. Điền thông tin:
+   - **Title**: `Keep Alive UniPrep Render`
+   - **URL**: Điền đường dẫn kèm đuôi `/health` (chỉ 1 dấu gạch chéo):
+     ```text
+     https://ten-app-cua-ban.onrender.com/health
+     ```
+   - **Schedule**: Chọn **Every 10 minutes** (Mỗi 10 phút).
+   - **Request Method**: `GET`.
+4. Bấm **Create** để lưu lại. Server của bạn sẽ luôn hoạt động 24/7 mà không lo bị đóng băng.
+
+---
+
+## 📦 Chuyển Đổi Dữ Liệu SQLite sang PostgreSQL
+
+Nếu bạn muốn sử dụng cơ sở dữ liệu đám mây PostgreSQL (như Neon.tech, Supabase, Render PostgreSQL):
+
+1. Tạo một cơ sở dữ liệu PostgreSQL và lấy chuỗi kết nối (`Connection String`).
+2. Khai báo biến môi trường `DATABASE_URL` trong file `.env` hoặc trên Render:
+   ```env
+   DATABASE_URL=postgres://user:password@host:port/dbname?sslmode=require
+   ```
+3. Chạy script di chuyển toàn bộ câu hỏi, đề thi và tài khoản quản trị từ SQLite sang PostgreSQL:
+   ```bash
+   node migrate_to_postgres.js
+   ```
+4. Khởi động lại server, hệ thống sẽ tự động chuyển sang đọc/ghi trên PostgreSQL.
+
+---
+
+## 📄 Bản Quyền & Giấy Phép (License)
+Dự án được phân phối dưới giấy phép mã nguồn mở **MIT License**. Mọi cá nhân, tổ chức đều có quyền tự do sử dụng, chỉnh sửa và triển khai phục vụ mục đích giáo dục và cộng đồng.
