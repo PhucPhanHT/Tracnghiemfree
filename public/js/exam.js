@@ -69,6 +69,7 @@ const ExamRunner = {
 
     this.renderQuestions();
     this.renderPalette();
+    this.renderMobilePalette();
     this.updateStatsBanner();
     this.setActiveQuestion(1, true);
 
@@ -123,6 +124,12 @@ const ExamRunner = {
     const titleContainer = document.getElementById('nav-exam-title-container');
     if (titleContainer) titleContainer.classList.remove('hidden');
 
+    const subTitleEl = document.getElementById('nav-exam-subtitle');
+    if (subTitleEl) {
+      const modeLabel = mode === 'practice' ? 'Luyện tập' : 'Kiểm tra';
+      subTitleEl.textContent = `${modeLabel} · Đã làm 0/${this.activeQuestions.length} câu`;
+    }
+
     // Show/hide Instant AI toggle in header (shown in practice mode)
     const toggleAiContainer = document.getElementById('toggle-instant-ai-container');
     if (toggleAiContainer) {
@@ -162,7 +169,13 @@ const ExamRunner = {
     // Render questions & palette
     this.renderQuestions();
     this.renderPalette();
+    this.renderMobilePalette();
     this.updateStatsBanner();
+    this.setActiveQuestion(1, false);
+
+    // Show mobile bottom navigation bar on mobile
+    const bottomBar = document.getElementById('exam-mobile-bottom-bar');
+    if (bottomBar) bottomBar.classList.remove('hidden');
 
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -300,33 +313,29 @@ const ExamRunner = {
 
       const card = document.createElement('div');
       card.id = `q-card-${displayNum}`;
-      card.className = `question-card bg-white rounded-2xl border p-5 sm:p-6 transition-all ${
-        isActive ? 'active-question border-emerald-500 shadow-sm ring-1 ring-emerald-500/20' : 'border-gray-200 shadow-xs'
+      card.className = `question-card bg-white dark:bg-[#111827] rounded-2xl border p-4 sm:p-6 transition-all ${
+        isActive ? 'block active-question border-emerald-500 shadow-sm ring-1 ring-emerald-500/20' : 'hidden lg:block border-gray-200 dark:border-gray-800 shadow-xs'
       }`;
 
-      // Card Header
+      // Card Header (Matching Screenshot 2: CÂU X on top, followed by question text)
       const headerDiv = document.createElement('div');
-      headerDiv.className = 'flex items-start space-x-3 mb-4';
+      headerDiv.className = 'mb-4';
 
-      // Badge Number
-      const badge = document.createElement('span');
-      badge.className = `q-badge w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-colors ${
-        isActive ? 'bg-[#00a86b] text-white' : 'bg-gray-100 text-gray-700'
-      }`;
-      badge.textContent = displayNum;
+      const qLabel = document.createElement('div');
+      qLabel.className = 'text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1.5';
+      qLabel.textContent = `CÂU ${displayNum}`;
 
-      // Question Text
       const qText = document.createElement('h3');
-      qText.className = 'text-base sm:text-lg font-bold text-gray-900 leading-snug pt-0.5';
+      qText.className = 'text-base sm:text-lg font-bold text-gray-900 dark:text-white leading-snug';
       qText.textContent = this.cleanQuestionText(q.question_text);
 
-      headerDiv.appendChild(badge);
+      headerDiv.appendChild(qLabel);
       headerDiv.appendChild(qText);
       card.appendChild(headerDiv);
 
       // Options List (A, B, C, D)
       const optionsContainer = document.createElement('div');
-      optionsContainer.className = 'space-y-3 pl-0 sm:pl-11';
+      optionsContainer.className = 'space-y-2.5 sm:space-y-3';
 
       const options = [
         { key: 'A', text: q.option_a },
@@ -339,70 +348,64 @@ const ExamRunner = {
         if (!opt.text) return;
 
         const isChecked = selectedOption === opt.key;
-        let optClass = 'option-label flex items-center p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer ';
+        let optClass = 'option-label flex items-start p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer ';
         let radioIconHtml = '';
-        let badgeHtml = '';
+        let subTextHtml = '';
 
         if (isAnswerRevealed) {
           const isCorrect = opt.key === q.correct_answer;
           const isUserPickWrong = isChecked && !isCorrect;
 
           if (isCorrect) {
-            // Correct Answer style (Matching exact screenshot!)
-            optClass += 'border-2 border-emerald-500 bg-[#ecfdf5] ';
+            // Correct Answer style (Matching exact Screenshot 2!)
+            optClass += 'border-2 border-emerald-500 bg-[#ecfdf5] dark:bg-emerald-950/30 ';
             radioIconHtml = `
-              <div class="w-6 h-6 rounded-full bg-[#00a86b] text-white flex items-center justify-center mr-3 shrink-0 shadow-xs font-bold text-xs">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#00a86b] text-white flex items-center justify-center mr-3 shrink-0 shadow-xs font-bold text-xs">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
                 </svg>
               </div>
             `;
-            badgeHtml = `
-              <span class="ml-auto text-xs font-bold text-[#00a86b] flex items-center space-x-1 shrink-0">
-                <svg class="w-4 h-4 text-[#00a86b]" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                </svg>
+            subTextHtml = `
+              <div class="text-xs font-bold text-[#00a86b] dark:text-emerald-400 mt-1 flex items-center space-x-1">
+                <span>·</span>
                 <span>Đáp án đúng</span>
-              </span>
+              </div>
             `;
           } else if (isUserPickWrong) {
-            // User Selected Wrong Answer style (Matching exact screenshot!)
-            optClass += 'border-2 border-rose-400 bg-[#fff1f2] ';
+            // User Selected Wrong Answer style (Matching exact Screenshot 2!)
+            optClass += 'border-2 border-rose-500 bg-[#fff1f2] dark:bg-rose-950/30 ';
             radioIconHtml = `
-              <div class="w-6 h-6 rounded-full bg-[#e11d48] text-white flex items-center justify-center mr-3 shrink-0 shadow-xs font-bold text-xs">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#e11d48] text-white flex items-center justify-center mr-3 shrink-0 shadow-xs font-bold text-xs">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </div>
             `;
-            badgeHtml = `
-              <span class="ml-auto text-xs font-bold text-[#e11d48] flex items-center space-x-1 shrink-0">
-                <svg class="w-4 h-4 text-[#e11d48]" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                </svg>
+            subTextHtml = `
+              <div class="text-xs font-bold text-[#e11d48] dark:text-rose-400 mt-1 flex items-center space-x-1">
+                <span>·</span>
                 <span>Bạn chọn (Sai)</span>
-              </span>
+              </div>
             `;
           } else {
             // Neutral unselected options
-            optClass += 'border-gray-200 bg-white hover:bg-gray-50/80 ';
+            optClass += 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111827] hover:bg-gray-50 dark:hover:bg-gray-800/60 ';
             radioIconHtml = `
-              <div class="w-5 h-5 rounded-full border-2 border-gray-300 mr-3 shrink-0"></div>
+              <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold text-xs flex items-center justify-center mr-3 shrink-0 border border-gray-200 dark:border-gray-700">${opt.key}</div>
             `;
           }
         } else {
           // Normal test mode before selection/submission
           if (isChecked) {
-            optClass += 'selected border-emerald-500 bg-[#f0fdf4] ';
+            optClass += 'selected border-2 border-emerald-500 bg-[#f0fdf4] dark:bg-emerald-950/20 ';
             radioIconHtml = `
-              <div class="radio-circle w-5 h-5 rounded-full border-2 border-emerald-500 bg-emerald-500 flex items-center justify-center mr-3 shrink-0">
-                <div class="w-2 h-2 rounded-full bg-white"></div>
-              </div>
+              <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-500 text-white font-bold text-xs flex items-center justify-center mr-3 shrink-0 shadow-xs">${opt.key}</div>
             `;
           } else {
-            optClass += 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 ';
+            optClass += 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111827] hover:border-gray-300 dark:hover:border-gray-700 ';
             radioIconHtml = `
-              <div class="radio-circle w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center mr-3 shrink-0"></div>
+              <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold text-xs flex items-center justify-center mr-3 shrink-0 border border-gray-200 dark:border-gray-700">${opt.key}</div>
             `;
           }
         }
@@ -412,10 +415,10 @@ const ExamRunner = {
         optLabel.innerHTML = `
           <input type="radio" name="q_${qId}" value="${opt.key}" ${isChecked ? 'checked' : ''} class="hidden">
           ${radioIconHtml}
-          <span class="text-sm sm:text-base text-gray-800 leading-relaxed">
-            <b class="mr-1 text-gray-900">${opt.key}.</b> ${opt.text}
-          </span>
-          ${badgeHtml}
+          <div class="flex-grow pt-0.5 min-w-0">
+            <span class="text-sm sm:text-base text-gray-800 dark:text-gray-200 font-medium leading-relaxed block">${opt.text}</span>
+            ${subTextHtml}
+          </div>
         `;
 
         // Click handler to select answer
@@ -429,95 +432,93 @@ const ExamRunner = {
 
       card.appendChild(optionsContainer);
 
-      // AI Explanation Section (Matching exact screenshot!)
+      // AI Explanation Section (Matching exact Screenshot 2!)
       if (isAnswerRevealed && this.instantAiExplanation) {
         const isUserCorrect = selectedOption === q.correct_answer;
         const whyWrongText = !isUserCorrect ? this.getWhyWrongText(q, selectedOption) : null;
-        const detailedExp = q.explanation || 'Vấn đề quan hệ giữa tư duy và tồn tại (giữa ý thức và vật chất) là nội dung trung tâm của mọi học thuyết triết học.';
+        const detailedExp = q.explanation || 'Nội dung kiến thức bám sát quy định giáo trình chính thức.';
         const mnemonicTip = this.getMnemonicTip(q);
 
         const expWrapper = document.createElement('div');
-        expWrapper.className = 'mt-5 pt-3 border-t border-gray-100 pl-0 sm:pl-11 space-y-2';
+        expWrapper.className = 'mt-5 pt-3 border-t border-gray-100 dark:border-gray-800 space-y-3';
 
-        // Header row: Ẩn/Hiện phân tích AI & Hỏi thêm AI button (Exact match of Screenshot!)
+        // Header row: Phân tích AI & Hỏi thêm AI (Screenshot 2)
         const headerActionRow = document.createElement('div');
-        headerActionRow.className = 'flex items-center justify-between text-xs pt-1';
+        headerActionRow.className = 'flex items-center justify-between text-xs font-bold pt-1';
 
         headerActionRow.innerHTML = `
-          <button type="button" onclick="ExamRunner.toggleAiBox(${qId})" class="text-[#e11d48] font-bold hover:underline flex items-center space-x-1">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
-            </svg>
-            <span id="ai-toggle-text-${qId}">${isBoxHidden ? 'Hiện phân tích AI ⌄' : 'Ẩn phân tích AI ⌃'}</span>
-          </button>
-
-          <button type="button" onclick="ExamRunner.toggleAiChat(${qId})" class="px-3 py-1.5 rounded-xl bg-[#e6f9f0] hover:bg-[#d0f5e2] text-[#00a86b] font-bold text-xs flex items-center space-x-1.5 transition-colors shadow-2xs">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-            </svg>
+          <span class="text-[#00a86b] dark:text-emerald-400">Phân tích AI</span>
+          <button type="button" onclick="ExamRunner.toggleAiChat(${qId})" class="text-[#00a86b] dark:text-emerald-400 hover:underline flex items-center space-x-1">
             <span>Hỏi thêm AI</span>
           </button>
         `;
         expWrapper.appendChild(headerActionRow);
 
-        // Main AI Box (Exact match of Screenshot!)
-        const aiBox = document.createElement('div');
-        aiBox.id = `ai-box-${qId}`;
-        aiBox.className = `${isBoxHidden ? 'hidden' : 'block'} rounded-2xl border border-emerald-200 bg-white p-4 sm:p-5 shadow-xs space-y-3.5 mt-2 transition-all`;
+        // Block 1: Vì sao đáp án sai (Only if user picked wrong, Screenshot 2)
+        if (whyWrongText) {
+          const wrongBox = document.createElement('div');
+          wrongBox.className = 'p-3.5 sm:p-4 rounded-2xl bg-[#fff1f2] dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs sm:text-sm text-rose-900 dark:text-rose-200 leading-relaxed';
+          wrongBox.innerHTML = `<span class="font-bold">Vì sao đáp án ${selectedOption} sai:</span> ${whyWrongText}`;
+          expWrapper.appendChild(wrongBox);
+        }
 
-        aiBox.innerHTML = `
-          <!-- Block 1: Vì sao đáp án sai (Only if wrong) -->
-          ${whyWrongText ? `
-            <div class="bg-[#fff1f2] border-l-4 border-rose-500 rounded-r-xl p-3 text-xs sm:text-sm text-rose-900 leading-relaxed">
-              <span class="font-bold text-rose-800">Vì sao đáp án ${selectedOption} sai:</span> ${whyWrongText}
-            </div>
-          ` : ''}
-
-          <!-- Block 2: Giải thích chi tiết -->
-          <div class="text-xs sm:text-sm text-gray-800 leading-relaxed">
-            <span class="font-bold text-gray-900">💡 Giải thích chi tiết:</span> ${detailedExp}
-          </div>
-
-          <!-- Block 3: Gemini AI phân tích mở rộng & Mẹo nhớ -->
-          <div class="pt-2.5 border-t border-gray-100 text-xs sm:text-sm text-gray-800 space-y-1.5 leading-relaxed">
-            <div class="font-bold text-[#00a86b] flex items-center space-x-1.5">
-              <svg class="w-4 h-4 text-[#00a86b]" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14H8a4 4 0 01-.8-7.92A5 5 0 0117 9c0 1.95-1.12 3.65-2.8 4.4z"/>
-              </svg>
-              <span>Gemini AI phân tích mở rộng:</span>
-            </div>
-            <div class="text-gray-700 pl-5">
-              <span class="font-bold text-amber-800">🔑 Mẹo nhớ từ khóa nhanh:</span> ${mnemonicTip}
-            </div>
+        // Accordion 1: Giải thích chi tiết (Screenshot 2)
+        const acc1 = document.createElement('div');
+        acc1.className = 'rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111827] overflow-hidden';
+        acc1.innerHTML = `
+          <button type="button" onclick="ExamRunner.toggleAccordion('exp-${qId}')" class="w-full p-3.5 text-left text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+            <span>Giải thích chi tiết</span>
+            <svg id="icon-exp-${qId}" class="w-4 h-4 text-gray-400 transition-transform transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div id="content-exp-${qId}" class="hidden p-3.5 pt-0 text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed border-t border-gray-100 dark:border-gray-800/60">
+            ${detailedExp}
           </div>
         `;
-        expWrapper.appendChild(aiBox);
+        expWrapper.appendChild(acc1);
+
+        // Accordion 2: Gemini AI · Mẹo nhớ từ khóa nhanh (Screenshot 2)
+        const acc2 = document.createElement('div');
+        acc2.className = 'rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111827] overflow-hidden';
+        acc2.innerHTML = `
+          <button type="button" onclick="ExamRunner.toggleAccordion('tip-${qId}')" class="w-full p-3.5 text-left text-xs sm:text-sm font-bold text-[#00a86b] dark:text-emerald-400 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+            <span>Gemini AI · Mẹo nhớ từ khóa nhanh</span>
+            <svg id="icon-tip-${qId}" class="w-4 h-4 text-gray-400 transition-transform transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div id="content-tip-${qId}" class="hidden p-3.5 pt-0 text-xs sm:text-sm text-emerald-800 dark:text-emerald-300 leading-relaxed border-t border-gray-100 dark:border-gray-800/60">
+            ${mnemonicTip}
+          </div>
+        `;
+        expWrapper.appendChild(acc2);
 
         // Interactive "Hỏi thêm AI" Drawer
         const chatDrawer = document.createElement('div');
         chatDrawer.id = `ai-chat-${qId}`;
-        chatDrawer.className = 'hidden mt-3 p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-3';
+        chatDrawer.className = 'hidden mt-3 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 space-y-3';
         chatDrawer.innerHTML = `
           <div class="flex items-center justify-between text-xs">
-            <span class="font-bold text-gray-800 flex items-center space-x-1.5">
+            <span class="font-bold text-gray-800 dark:text-gray-200 flex items-center space-x-1.5">
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>Trợ lý Gemini AI - Giải đáp câu ${displayNum}</span>
             </span>
-            <button type="button" onclick="document.getElementById('ai-chat-${qId}').classList.add('hidden')" class="text-gray-400 hover:text-gray-700 text-xs font-semibold">✕ Đóng</button>
+            <button type="button" onclick="document.getElementById('ai-chat-${qId}').classList.add('hidden')" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xs font-semibold">✕ Đóng</button>
           </div>
 
-          <div id="ai-chat-reply-${qId}" class="hidden p-3.5 rounded-xl bg-white border border-emerald-200 text-xs sm:text-sm text-gray-800 leading-relaxed shadow-xs"></div>
+          <div id="ai-chat-reply-${qId}" class="hidden p-3.5 rounded-xl bg-white dark:bg-[#111827] border border-emerald-200 dark:border-emerald-800 text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-relaxed shadow-xs"></div>
 
           <!-- Quick Prompts Chips -->
           <div class="flex flex-wrap gap-1.5 text-xs">
-            <button type="button" onclick="ExamRunner.askAiQuick(${qId}, 'Giải thích đơn giản dễ hiểu hơn')" class="px-3 py-1 rounded-full bg-white border border-gray-200 text-gray-700 hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors">💡 Giải thích đơn giản hơn</button>
-            <button type="button" onclick="ExamRunner.askAiQuick(${qId}, 'Cho ví dụ thực tế sinh động')" class="px-3 py-1 rounded-full bg-white border border-gray-200 text-gray-700 hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors">🔍 Cho ví dụ thực tế</button>
-            <button type="button" onclick="ExamRunner.askAiQuick(${qId}, 'Phân biệt chi tiết đáp án đúng và đáp án sai')" class="px-3 py-1 rounded-full bg-white border border-gray-200 text-gray-700 hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors">⚖️ Phân biệt đúng - sai</button>
+            <button type="button" onclick="ExamRunner.askAiQuick(${qId}, 'Giải thích đơn giản dễ hiểu hơn')" class="px-3 py-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">💡 Giải thích đơn giản hơn</button>
+            <button type="button" onclick="ExamRunner.askAiQuick(${qId}, 'Cho ví dụ thực tế sinh động')" class="px-3 py-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">🔍 Cho ví dụ thực tế</button>
+            <button type="button" onclick="ExamRunner.askAiQuick(${qId}, 'Phân biệt chi tiết đáp án đúng và đáp án sai')" class="px-3 py-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">⚖️ Phân biệt đúng - sai</button>
           </div>
 
           <!-- Input bar -->
           <div class="flex items-center space-x-2">
-            <input type="text" id="ai-chat-input-${qId}" placeholder="Nhập câu hỏi của bạn cho Gemini AI..." class="flex-grow px-3.5 py-2 rounded-xl border border-gray-200 text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" onkeydown="if(event.key === 'Enter') ExamRunner.sendAiQuestion(${qId});">
+            <input type="text" id="ai-chat-input-${qId}" placeholder="Nhập câu hỏi của bạn cho Gemini AI..." class="flex-grow px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs sm:text-sm bg-white dark:bg-[#111827] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" onkeydown="if(event.key === 'Enter') ExamRunner.sendAiQuestion(${qId});">
             <button type="button" id="ai-chat-send-${qId}" onclick="ExamRunner.sendAiQuestion(${qId})" class="px-4 py-2 rounded-xl bg-[#00a86b] hover:bg-emerald-700 text-white font-bold text-xs shrink-0 flex items-center space-x-1 shadow-xs transition-colors">
               <span>Hỏi AI</span>
             </button>
@@ -550,6 +551,18 @@ const ExamRunner = {
       box.classList.add('hidden');
       this.hiddenAiBoxes.add(qId);
       if (textSpan) textSpan.textContent = 'Hiện phân tích AI ⌄';
+    }
+  },
+
+  // Toggle Accordion (Screenshot 2: Giải thích chi tiết & Gemini AI mẹo nhớ)
+  toggleAccordion(id) {
+    const content = document.getElementById(`content-${id}`);
+    const icon = document.getElementById(`icon-${id}`);
+    if (content) {
+      content.classList.toggle('hidden');
+    }
+    if (icon) {
+      icon.classList.toggle('rotate-180');
     }
   },
 
@@ -667,36 +680,141 @@ const ExamRunner = {
   setActiveQuestion(displayNum, shouldScroll = true) {
     this.activeQuestionNumber = displayNum;
 
+    // Mobile single question visibility + desktop all questions visibility
     document.querySelectorAll('.question-card').forEach(c => {
-      c.classList.remove('active-question', 'border-emerald-500', 'ring-1', 'ring-emerald-500/20');
-      c.classList.add('border-gray-200');
-      const badge = c.querySelector('.q-badge');
-      if (badge) {
-        badge.classList.remove('bg-[#00a86b]', 'text-white');
-        badge.classList.add('bg-gray-100', 'text-gray-700');
-      }
+      c.classList.remove('block', 'active-question', 'border-emerald-500', 'ring-1', 'ring-emerald-500/20');
+      c.classList.add('hidden', 'lg:block', 'border-gray-200', 'dark:border-gray-800');
     });
 
     const activeCard = document.getElementById(`q-card-${displayNum}`);
     if (activeCard) {
-      activeCard.classList.add('active-question', 'border-emerald-500', 'ring-1', 'ring-emerald-500/20');
-      activeCard.classList.remove('border-gray-200');
-      const badge = activeCard.querySelector('.q-badge');
-      if (badge) {
-        badge.classList.add('bg-[#00a86b]', 'text-white');
-        badge.classList.remove('bg-gray-100', 'text-gray-700');
-      }
+      activeCard.classList.remove('hidden', 'border-gray-200', 'dark:border-gray-800');
+      activeCard.classList.add('block', 'active-question', 'border-emerald-500', 'ring-1', 'ring-emerald-500/20');
 
       if (shouldScroll) {
         activeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
 
+    // Desktop palette active highlight
     document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('current', 'ring-2', 'ring-emerald-500'));
     const paletteBtn = document.getElementById(`palette-btn-${displayNum}`);
     if (paletteBtn) {
       paletteBtn.classList.add('current', 'ring-2', 'ring-emerald-500');
     }
+
+    // Mobile palette active highlight
+    document.querySelectorAll('#mobile-palette-grid button').forEach(b => b.classList.remove('ring-2', 'ring-emerald-400', 'ring-offset-2', 'ring-offset-[#0f172a]'));
+    const mobileBtn = document.getElementById(`mobile-palette-btn-${displayNum}`);
+    if (mobileBtn) {
+      mobileBtn.classList.add('ring-2', 'ring-emerald-400', 'ring-offset-2', 'ring-offset-[#0f172a]');
+    }
+
+    // Update bottom bar state
+    this.updateMobileBottomBar();
+  },
+
+  // Mobile Question Navigation
+  prevQuestion() {
+    if (this.activeQuestionNumber > 1) {
+      this.setActiveQuestion(this.activeQuestionNumber - 1, true);
+    }
+  },
+
+  nextQuestion() {
+    if (this.activeQuestionNumber < this.activeQuestions.length) {
+      this.setActiveQuestion(this.activeQuestionNumber + 1, true);
+    } else {
+      // Last question - submit exam
+      this.submitExam();
+    }
+  },
+
+  updateMobileBottomBar() {
+    const totalCount = this.activeQuestions.length;
+    const currentNum = this.activeQuestionNumber;
+
+    const paletteBtnText = document.getElementById('mobile-palette-q-text');
+    if (paletteBtnText) {
+      paletteBtnText.textContent = `${currentNum} / ${totalCount}`;
+    }
+
+    const prevBtn = document.getElementById('mobile-prev-q-btn');
+    if (prevBtn) {
+      prevBtn.disabled = (currentNum <= 1);
+    }
+
+    const nextBtnText = document.getElementById('mobile-next-btn-text');
+    if (nextBtnText) {
+      nextBtnText.textContent = (currentNum >= totalCount) ? 'Nộp bài' : 'Câu sau';
+    }
+  },
+
+  openMobilePalette() {
+    this.renderMobilePalette();
+    const modal = document.getElementById('modal-question-palette');
+    if (modal) modal.classList.remove('hidden');
+  },
+
+  closeMobilePalette() {
+    const modal = document.getElementById('modal-question-palette');
+    if (modal) modal.classList.add('hidden');
+  },
+
+  renderMobilePalette() {
+    const grid = document.getElementById('mobile-palette-grid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+    const answeredCount = Object.keys(this.userAnswers).length;
+    const totalCount = this.activeQuestions.length;
+
+    // Update stat
+    const statEl = document.getElementById('mobile-palette-stat');
+    if (statEl) {
+      statEl.textContent = `Đã làm ${answeredCount}/${totalCount} câu`;
+    }
+
+    this.activeQuestions.forEach(q => {
+      const displayNum = q.display_number;
+      const isAnswered = Boolean(this.userAnswers[q.id]);
+      const isCurrent = displayNum === this.activeQuestionNumber;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = `mobile-palette-btn-${displayNum}`;
+
+      // Styling matching Screenshot 3:
+      // Green #00a86b if answered, dark slate #1e293b if unanswered
+      let btnClass = 'h-11 rounded-xl text-sm font-bold flex items-center justify-center transition-all ';
+
+      if (this.isReviewMode || (this.mode === 'practice' && isAnswered)) {
+        const isCorrect = this.userAnswers[q.id] === q.correct_answer;
+        if (isCorrect) {
+          btnClass += 'bg-[#00a86b] text-white ';
+        } else {
+          btnClass += 'bg-[#e11d48] text-white ';
+        }
+      } else if (isAnswered) {
+        btnClass += 'bg-[#00a86b] text-white shadow-xs ';
+      } else {
+        btnClass += 'bg-[#1e293b] text-gray-300 border border-gray-700 hover:border-gray-500 ';
+      }
+
+      if (isCurrent) {
+        btnClass += 'ring-2 ring-emerald-400 ring-offset-2 ring-offset-[#0f172a] ';
+      }
+
+      btn.className = btnClass;
+      btn.textContent = displayNum;
+
+      btn.addEventListener('click', () => {
+        this.setActiveQuestion(displayNum, true);
+        this.closeMobilePalette();
+      });
+
+      grid.appendChild(btn);
+    });
   },
 
   // Select Answer
@@ -710,6 +828,7 @@ const ExamRunner = {
     if (this.mode === 'practice') {
       this.renderQuestions();
       this.renderPalette();
+      this.renderMobilePalette();
       this.updateStatsBanner();
       this.setActiveQuestion(displayNum, false);
       return;
@@ -722,10 +841,10 @@ const ExamRunner = {
       labels.forEach(l => {
         const input = l.querySelector('input');
         if (input && input.value === optionKey) {
-          l.classList.add('selected', 'border-emerald-500', 'bg-[#f0fdf4]');
+          l.classList.add('selected', 'border-emerald-500', 'bg-[#f0fdf4]', 'dark:bg-emerald-950/20');
           input.checked = true;
         } else {
-          l.classList.remove('selected', 'border-emerald-500', 'bg-[#f0fdf4]');
+          l.classList.remove('selected', 'border-emerald-500', 'bg-[#f0fdf4]', 'dark:bg-emerald-950/20');
           if (input) input.checked = false;
         }
       });
@@ -733,8 +852,14 @@ const ExamRunner = {
 
     const pBtn = document.getElementById(`palette-btn-${displayNum}`);
     if (pBtn) {
-      pBtn.classList.remove('unanswered');
+      pBtn.classList.remove('unanswered', 'bg-gray-100', 'text-gray-700');
       pBtn.classList.add('answered', 'bg-[#00a86b]', 'text-white');
+    }
+
+    const mBtn = document.getElementById(`mobile-palette-btn-${displayNum}`);
+    if (mBtn) {
+      mBtn.classList.remove('bg-[#1e293b]', 'text-gray-300', 'border', 'border-gray-700');
+      mBtn.classList.add('bg-[#00a86b]', 'text-white', 'shadow-xs');
     }
 
     this.updateStatsBanner();
@@ -749,6 +874,19 @@ const ExamRunner = {
 
     if (answeredStat) answeredStat.textContent = answeredCount;
     if (totalStat) totalStat.textContent = totalCount;
+
+    // Mobile subtitle in top navbar (Screenshot 2: "Luyện tập · Đã làm X/Y câu")
+    const subTitleEl = document.getElementById('nav-exam-subtitle');
+    if (subTitleEl) {
+      const modeLabel = this.mode === 'practice' ? 'Luyện tập' : 'Kiểm tra';
+      subTitleEl.textContent = `${modeLabel} · Đã làm ${answeredCount}/${totalCount} câu`;
+    }
+
+    // Mobile palette footer stat (Screenshot 3: "Đã làm X/Y câu")
+    const paletteStatEl = document.getElementById('mobile-palette-stat');
+    if (paletteStatEl) {
+      paletteStatEl.textContent = `Đã làm ${answeredCount}/${totalCount} câu`;
+    }
   },
 
   // Submit Exam
@@ -936,6 +1074,9 @@ const ExamRunner = {
 
     this.renderQuestions();
     this.renderPalette();
+    this.renderMobilePalette();
+    this.updateStatsBanner();
+    this.setActiveQuestion(1, true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
 

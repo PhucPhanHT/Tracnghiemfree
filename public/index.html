@@ -49,57 +49,60 @@
 <body class="bg-[#f8fafc] text-gray-800 font-sans min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
 
   <!-- ================= TOP NAVBAR ================= -->
-  <header id="main-header" class="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm transition-all">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+  <header id="main-header" class="bg-white dark:bg-[#111827] border-b border-gray-100 dark:border-gray-800 sticky top-0 z-40 shadow-xs transition-all">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
       
       <!-- Logo & Back Button -->
-      <div class="flex items-center space-x-3">
+      <div class="flex items-center space-x-2 sm:space-x-3 min-w-0">
         <!-- Back button (visible when taking exam or inside admin) -->
-        <button id="nav-back-btn" class="hidden p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors" title="Quay lại">
+        <button id="nav-back-btn" class="hidden p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0" title="Quay lại">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
           </svg>
         </button>
 
         <!-- Brand Logo -->
-        <a href="#" id="nav-brand-btn" class="flex items-center space-x-2.5 group">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+        <a href="#" id="nav-brand-btn" class="flex items-center space-x-2.5 group shrink-0">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
             <!-- Graduation Cap Icon -->
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
             </svg>
           </div>
-          <span class="text-xl font-bold tracking-tight text-gray-900">UniPrep</span>
+          <span class="text-lg sm:text-xl font-bold tracking-tight text-gray-900 dark:text-white">UniPrep</span>
         </a>
 
-        <!-- Center Exam Title (visible in exam view) -->
-        <div id="nav-exam-title-container" class="hidden pl-4 border-l border-gray-200">
-          <h2 id="nav-exam-title" class="text-sm sm:text-base font-semibold text-gray-800 truncate max-w-xs md:max-w-md lg:max-w-xl">
-            Đề thi giữa kỳ Triết học Mác-Lênin 2023
+        <!-- Center Exam Title & Progress Subtitle (Exact match of Screenshot 2) -->
+        <div id="nav-exam-title-container" class="hidden pl-2 sm:pl-4 border-l border-gray-200 dark:border-gray-800 flex-grow min-w-0">
+          <h2 id="nav-exam-title" class="text-xs sm:text-sm md:text-base font-bold text-gray-900 dark:text-white truncate">
+            Đề thi
           </h2>
+          <div id="nav-exam-subtitle" class="text-2xs sm:text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5 font-medium">
+            Luyện tập · Đã làm 0/0 câu
+          </div>
         </div>
       </div>
 
       <!-- Right Header Actions -->
-      <div class="flex items-center space-x-3">
+      <div class="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
         <!-- Normal Navigation Links -->
-        <div id="nav-standard-links" class="flex items-center space-x-2">
-          <button id="nav-kho-de-btn" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
+        <div id="nav-standard-links" class="flex items-center space-x-1.5 sm:space-x-2">
+          <button id="nav-kho-de-btn" class="hidden sm:inline-flex px-3.5 py-1.5 rounded-lg text-sm font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 transition-colors">
             Kho đề thi
           </button>
-          <button id="nav-admin-btn" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 flex items-center space-x-1.5 transition-colors">
-            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button id="nav-admin-btn" class="p-2 sm:px-3.5 sm:py-1.5 rounded-xl sm:rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center space-x-1.5 transition-colors border border-transparent" title="Quản trị & Up đề">
+            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
             </svg>
-            <span>Quản trị & Up đề</span>
+            <span class="hidden sm:inline">Quản trị & Up đề</span>
           </button>
         </div>
 
         <!-- Exam View Header Controls (Countdown Timer & Submit Button) -->
-        <div id="nav-exam-controls" class="hidden flex items-center space-x-3">
+        <div id="nav-exam-controls" class="hidden flex items-center space-x-2 sm:space-x-3">
           <!-- AI Instant Explanation Toggle (Matching Screenshot!) -->
-          <label id="toggle-instant-ai-container" class="cursor-pointer hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#e6f9f0] border border-emerald-200 text-xs font-bold text-[#00a86b] hover:bg-[#d0f5e2] transition-colors select-none" title="Bật/Tắt hiển thị phân tích AI ngay khi chọn đáp án">
+          <label id="toggle-instant-ai-container" class="cursor-pointer hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#e6f9f0] dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-[#00a86b] dark:text-emerald-400 hover:bg-[#d0f5e2] transition-colors select-none" title="Bật/Tắt hiển thị phân tích AI ngay khi chọn đáp án">
             <input type="checkbox" id="toggle-instant-ai" checked class="rounded text-[#00a86b] focus:ring-emerald-500 w-3.5 h-3.5 accent-[#00a86b]">
             <span class="flex items-center space-x-1">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +113,7 @@
           </label>
 
           <!-- Button Tráo câu hỏi trực tiếp -->
-          <button type="button" id="btn-reshuffle-header" onclick="ExamRunner.shuffleExam(true)" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 flex items-center space-x-1.5 transition-colors shadow-2xs" title="Đảo ngẫu nhiên lại thứ tự toàn bộ câu hỏi">
+          <button type="button" id="btn-reshuffle-header" onclick="ExamRunner.shuffleExam(true)" class="hidden md:flex px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 hover:bg-amber-100 border border-amber-200 dark:border-amber-800 items-center space-x-1.5 transition-colors shadow-2xs" title="Đảo ngẫu nhiên lại thứ tự toàn bộ câu hỏi">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
@@ -118,9 +121,9 @@
           </button>
 
           <!-- Timer Display with Quick Adjust Dropdown -->
-          <div class="relative">
-            <button type="button" id="nav-timer" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-mono text-sm font-semibold cursor-pointer transition-colors shadow-2xs" title="Bấm để điều chỉnh thêm/bớt thời gian làm bài">
-              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="relative hidden sm:block">
+            <button type="button" id="nav-timer" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-mono text-sm font-semibold cursor-pointer transition-colors shadow-2xs" title="Bấm để điều chỉnh thêm/bớt thời gian làm bài">
+              <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
               <span id="nav-timer-text">45:00</span>
@@ -130,18 +133,18 @@
             </button>
 
             <!-- Timer Dropdown Popover -->
-            <div id="nav-timer-dropdown" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 z-50">
-              <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">⏱️ Điều chỉnh giờ</div>
+            <div id="nav-timer-dropdown" class="hidden absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-3 z-50">
+              <div class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">⏱️ Điều chỉnh giờ</div>
               <div class="space-y-1.5 text-xs font-semibold">
-                <button type="button" onclick="ExamRunner.addExtraTime(5); document.getElementById('nav-timer-dropdown').classList.add('hidden');" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 hover:text-emerald-700 text-gray-700 flex items-center justify-between transition-colors">
+                <button type="button" onclick="ExamRunner.addExtraTime(5); document.getElementById('nav-timer-dropdown').classList.add('hidden');" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-400 text-gray-700 dark:text-gray-200 flex items-center justify-between transition-colors">
                   <span>+5 phút</span>
                   <span class="text-emerald-600 font-bold">+300s</span>
                 </button>
-                <button type="button" onclick="ExamRunner.addExtraTime(15); document.getElementById('nav-timer-dropdown').classList.add('hidden');" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 hover:text-emerald-700 text-gray-700 flex items-center justify-between transition-colors">
+                <button type="button" onclick="ExamRunner.addExtraTime(15); document.getElementById('nav-timer-dropdown').classList.add('hidden');" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-400 text-gray-700 dark:text-gray-200 flex items-center justify-between transition-colors">
                   <span>+15 phút</span>
                   <span class="text-emerald-600 font-bold">+900s</span>
                 </button>
-                <button type="button" onclick="ExamRunner.setUnlimitedTime(); document.getElementById('nav-timer-dropdown').classList.add('hidden');" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-700 text-gray-700 flex items-center justify-between transition-colors">
+                <button type="button" onclick="ExamRunner.setUnlimitedTime(); document.getElementById('nav-timer-dropdown').classList.add('hidden');" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-700 dark:hover:text-blue-400 text-gray-700 dark:text-gray-200 flex items-center justify-between transition-colors">
                   <span>Không giới hạn</span>
                   <span class="text-blue-600 font-bold">∞ Tự do</span>
                 </button>
@@ -149,10 +152,10 @@
             </div>
           </div>
 
-          <!-- Nộp bài Button (exact match of Image 2) -->
-          <button id="nav-submit-btn" class="px-4 py-1.5 rounded-lg text-sm font-semibold bg-[#e6f9f0] text-[#00a86b] hover:bg-[#d0f5e2] flex items-center space-x-1.5 transition-colors border border-emerald-200 shadow-sm">
-            <!-- Flag icon -->
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Nộp bài Button (exact match of Screenshot 2!) -->
+          <button id="nav-submit-btn" class="px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-[#00a86b]/15 hover:bg-[#00a86b]/25 text-[#00a86b] dark:text-emerald-400 border border-emerald-500 flex items-center space-x-1.5 transition-colors shadow-2xs">
+            <!-- Flag icon on desktop -->
+            <svg class="w-3.5 h-3.5 hidden sm:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path>
             </svg>
             <span>Nộp bài</span>
@@ -160,7 +163,7 @@
         </div>
 
         <!-- Dark / Light Mode Toggle Button -->
-        <button id="theme-toggle-btn" type="button" class="p-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-600 dark:text-amber-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all shadow-xs shrink-0" title="Chuyển chế độ Sáng / Tối" aria-label="Chuyển giao diện sáng tối">
+        <button id="theme-toggle-btn" type="button" class="p-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 text-gray-600 dark:text-amber-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all shadow-xs shrink-0" title="Chuyển chế độ Sáng / Tối" aria-label="Chuyển giao diện sáng tối">
           <!-- Sun Icon (visible in dark mode) -->
           <svg id="theme-icon-sun" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
@@ -179,46 +182,41 @@
   <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
 
     <!-- ------------------------------------------------------------- -->
-    <!-- VIEW 1: KHO ĐỀ THI (Matching Screenshot 3) -->
+    <!-- VIEW 1: KHO ĐỀ THI (Matching Screenshot 1) -->
     <!-- ------------------------------------------------------------- -->
     <section id="view-home" class="block">
       <!-- Title & Subtitle -->
-      <div class="mb-6">
-        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Kho đề thi</h1>
-        <p class="mt-1 text-gray-500 text-sm sm:text-base">Lựa chọn bộ đề phù hợp để bắt đầu luyện tập hoặc kiểm tra ngay.</p>
+      <div class="mb-4 sm:mb-6">
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Kho đề thi</h1>
+        <p class="mt-1 text-gray-500 dark:text-gray-400 text-xs sm:text-sm">Lựa chọn bộ đề phù hợp để bắt đầu luyện tập hoặc kiểm tra ngay.</p>
       </div>
 
-      <!-- Categories Filter Pills Bar, Search & Gộp Đề Button -->
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
-        <!-- Category Pills (matching screenshot 3) -->
-        <div id="category-pills" class="flex flex-wrap items-center gap-2 overflow-x-auto pb-2 scrollbar-none flex-grow">
-          <!-- Filled dynamically by JavaScript -->
-          <button class="cat-pill active px-4 py-2 rounded-full text-sm font-semibold bg-[#00a86b] text-white transition-all shadow-sm">
-            Tất cả
-          </button>
+      <!-- Search Box & Gộp Đề Button Row (Screenshot 1) -->
+      <div class="flex items-center space-x-2 sm:space-x-2.5 mb-3.5 sm:mb-4">
+        <!-- Search Box -->
+        <div class="relative flex-grow">
+          <input type="text" id="exam-search-input" placeholder="Tìm kiếm bộ đề..." class="w-full pl-9 pr-4 py-2 sm:py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111827] text-xs sm:text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+          <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5 sm:top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
         </div>
 
-        <div class="flex items-center space-x-2.5 shrink-0">
-          <!-- Search Box -->
-          <div class="relative min-w-[200px] max-w-xs w-full">
-            <input type="text" id="exam-search-input" placeholder="Tìm kiếm bộ đề..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-          </div>
-
-          <!-- Nút Gộp Đề Cho Học Viên -->
-          <button id="open-combine-modal-btn" type="button" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 flex items-center space-x-1.5 transition-all shrink-0 cursor-pointer" title="Gộp nhiều bộ đề để luyện tập hoặc kiểm tra theo ý muốn">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-            </svg>
-            <span>🔀 Gộp đề thi</span>
-          </button>
-        </div>
+        <!-- Nút Gộp Đề Cho Học Viên -->
+        <button id="open-combine-modal-btn" type="button" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#00a86b] hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-900/20 flex items-center space-x-1 transition-all shrink-0 cursor-pointer" title="Gộp nhiều bộ đề để luyện tập hoặc kiểm tra theo ý muốn">
+          <span>Gộp đề thi</span>
+        </button>
       </div>
 
-      <!-- Exams Grid (matching screenshot 3) -->
-      <div id="exams-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Categories Filter Pills Bar (Horizontal scrollable, Screenshot 1) -->
+      <div id="category-pills" class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none mb-5 sm:mb-6">
+        <!-- Filled dynamically by JavaScript -->
+        <button class="cat-pill active px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold bg-[#00a86b] text-white transition-all shadow-xs">
+          Tất cả
+        </button>
+      </div>
+
+      <!-- Exams Grid (1 col mobile, 2 col md, 3 col lg, 4 col xl) -->
+      <div id="exams-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         <!-- Rendered dynamically -->
       </div>
 
@@ -235,36 +233,36 @@
     </section>
 
     <!-- ------------------------------------------------------------- -->
-    <!-- VIEW 2: GIAO DIỆN LÀM BÀI (Matching Screenshot 2) -->
+    <!-- VIEW 2: GIAO DIỆN LÀM BÀI (Matching Screenshot 2 & 3) -->
     <!-- ------------------------------------------------------------- -->
-    <section id="view-exam" class="hidden">
+    <section id="view-exam" class="hidden pb-24 lg:pb-0">
       <div class="flex flex-col lg:flex-row gap-8 items-start">
         
         <!-- Left Main: Question Cards List -->
-        <div class="w-full lg:w-3/4 space-y-6">
+        <div class="w-full lg:w-3/4 space-y-5 sm:space-y-6">
           
-          <!-- Mode info banner -->
-          <div id="exam-mode-banner" class="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5 flex items-center justify-between text-sm">
-            <div class="flex items-center space-x-2 text-emerald-900 font-medium">
+          <!-- Mode info banner (Desktop only, mobile shows progress in navbar subtitle) -->
+          <div id="exam-mode-banner" class="hidden lg:flex bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-xl p-3.5 items-center justify-between text-sm">
+            <div class="flex items-center space-x-2 text-emerald-900 dark:text-emerald-300 font-medium">
               <span id="mode-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white">Kiểm tra</span>
               <span id="mode-desc">Thời gian làm bài có giới hạn. Nhấn "Nộp bài" khi hoàn thành.</span>
             </div>
-            <div class="text-xs text-gray-500" id="answered-stat-banner">
-              Đã làm: <b class="text-emerald-700" id="stat-answered-count">0</b>/<span id="stat-total-count">0</span> câu
+            <div class="text-xs text-gray-500 dark:text-gray-400" id="answered-stat-banner">
+              Đã làm: <b class="text-emerald-700 dark:text-emerald-400" id="stat-answered-count">0</b>/<span id="stat-total-count">0</span> câu
             </div>
           </div>
 
           <!-- Questions Container -->
-          <div id="questions-container" class="space-y-6">
+          <div id="questions-container" class="space-y-5 sm:space-y-6">
             <!-- Rendered dynamically -->
           </div>
 
-          <!-- Bottom Submit Action -->
-          <div class="pt-6 border-t border-gray-200 flex items-center justify-between">
-            <button id="bottom-back-btn" class="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50">
+          <!-- Bottom Submit Action (Desktop only) -->
+          <div class="hidden lg:flex pt-6 border-t border-gray-200 dark:border-gray-800 items-center justify-between">
+            <button id="bottom-back-btn" class="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
               Quay lại danh sách
             </button>
-            <button id="bottom-submit-btn" class="px-6 py-2.5 rounded-xl bg-[#00a86b] text-white font-semibold text-sm hover:bg-emerald-700 shadow-md shadow-emerald-600/20 flex items-center space-x-2">
+            <button id="bottom-submit-btn" class="px-6 py-2.5 rounded-xl bg-[#00a86b] text-white font-semibold text-sm hover:bg-emerald-700 shadow-md shadow-emerald-600/20 flex items-center space-x-2 transition-all">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
               </svg>
@@ -273,32 +271,32 @@
           </div>
         </div>
 
-        <!-- Right Sticky Sidebar: Question Palette (Exact match of Image 2) -->
-        <div class="w-full lg:w-1/4 lg:sticky lg:top-24">
-          <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+        <!-- Right Sticky Sidebar: Question Palette (Desktop only) -->
+        <div class="hidden lg:block w-full lg:w-1/4 lg:sticky lg:top-24">
+          <div class="bg-white dark:bg-[#111827] rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
             <!-- Title -->
-            <h3 class="text-base font-bold text-gray-900 mb-3">Danh sách câu hỏi</h3>
+            <h3 class="text-base font-bold text-gray-900 dark:text-white mb-3">Danh sách câu hỏi</h3>
             
             <!-- Legend (Green dot Đã làm, Gray dot Chưa làm) -->
-            <div class="flex items-center space-x-4 text-xs font-medium text-gray-500 mb-4 pb-3 border-b border-gray-100">
+            <div class="flex items-center space-x-4 text-xs font-medium text-gray-500 dark:text-gray-400 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
               <div class="flex items-center space-x-1.5">
                 <span class="w-2.5 h-2.5 rounded-full bg-[#00a86b]"></span>
                 <span>Đã làm</span>
               </div>
               <div class="flex items-center space-x-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-gray-300"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-gray-600"></span>
                 <span>Chưa làm</span>
               </div>
             </div>
 
             <!-- Question Numbers Grid (5 columns, 1..N) -->
-            <div id="palette-grid" class="grid grid-cols-5 gap-2.5">
+            <div id="palette-grid" class="grid grid-cols-5 gap-2.5 max-h-[60vh] overflow-y-auto pr-1">
               <!-- Rendered dynamically -->
             </div>
 
             <!-- Fast Actions in Sidebar -->
-            <div class="mt-6 pt-4 border-t border-gray-100 space-y-2.5">
-              <button type="button" onclick="ExamRunner.shuffleExam(true)" class="w-full py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs flex items-center justify-center space-x-1.5 transition-colors shadow-2xs" title="Đảo ngẫu nhiên lại thứ tự câu hỏi">
+            <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 space-y-2.5">
+              <button type="button" onclick="ExamRunner.shuffleExam(true)" class="w-full py-2 px-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800 font-bold text-xs flex items-center justify-center space-x-1.5 transition-colors shadow-2xs" title="Đảo ngẫu nhiên lại thứ tự câu hỏi">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                 </svg>
@@ -315,100 +313,170 @@
       </div>
     </section>
 
+    <!-- Mobile Fixed Bottom Navigation Bar (Screenshot 2) -->
+    <div id="exam-mobile-bottom-bar" class="hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0f172a]/95 dark:bg-[#0f172a]/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between shadow-2xl lg:hidden">
+      <!-- Prev Question Button -->
+      <button type="button" id="mobile-prev-q-btn" onclick="ExamRunner.prevQuestion()" class="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed" title="Câu trước">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+
+      <!-- Palette Modal Trigger Button (Shows 1 / 210) -->
+      <button type="button" id="mobile-palette-trigger-btn" onclick="ExamRunner.openMobilePalette()" class="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-bold text-sm border border-gray-200 dark:border-gray-700 shadow-sm transition-all" title="Bấm để xem danh sách câu hỏi">
+        <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"/>
+        </svg>
+        <span id="mobile-palette-q-text">1 / 210</span>
+      </button>
+
+      <!-- Next Question Button -->
+      <button type="button" id="mobile-next-q-btn" onclick="ExamRunner.nextQuestion()" class="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl bg-[#00a86b] hover:bg-emerald-600 text-white font-bold text-sm shadow-md shadow-emerald-900/30 transition-all" title="Câu tiếp theo">
+        <span id="mobile-next-btn-text">Câu sau</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile Bottom Sheet Question Palette (Screenshot 3) -->
+    <div id="modal-question-palette" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-xs transition-opacity animate-fade-in">
+      <div class="bg-[#0f172a] text-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl relative border border-gray-800 text-left transform transition-all animate-scale-up max-h-[85vh] flex flex-col">
+        <!-- Handle Bar (Mobile) -->
+        <div class="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-3 shrink-0 sm:hidden"></div>
+
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-gray-800 shrink-0">
+          <h3 class="text-lg font-bold text-white">Danh sách câu hỏi</h3>
+          <button id="modal-palette-close-btn" type="button" onclick="ExamRunner.closeMobilePalette()" class="p-1.5 rounded-full text-gray-400 hover:text-white hover:bg-gray-800 transition-colors cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Legend (Screenshot 3) -->
+        <div class="flex items-center space-x-5 py-3 text-xs font-semibold text-gray-400 shrink-0">
+          <div class="flex items-center space-x-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#00a86b]"></span>
+            <span>Đã làm</span>
+          </div>
+          <div class="flex items-center space-x-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#1e293b] border border-gray-600"></span>
+            <span>Chưa làm</span>
+          </div>
+        </div>
+
+        <!-- Scrollable 6-column grid matching Screenshot 3 -->
+        <div id="mobile-palette-grid" class="grid grid-cols-6 gap-2.5 overflow-y-auto py-2 flex-grow pr-1">
+          <!-- Dynamically populated buttons -->
+        </div>
+
+        <!-- Footer matching Screenshot 3 -->
+        <div class="pt-4 mt-2 border-t border-gray-800 flex items-center justify-between shrink-0">
+          <div id="mobile-palette-stat" class="text-xs font-bold text-gray-400">
+            Đã làm 0/0 câu
+          </div>
+          <button type="button" id="mobile-palette-submit-btn" onclick="ExamRunner.closeMobilePalette(); ExamRunner.submitExam();" class="px-5 py-2.5 rounded-xl bg-[#00a86b] hover:bg-emerald-600 text-white font-bold text-sm shadow-md transition-all">
+            Nộp bài
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- ------------------------------------------------------------- -->
     <!-- VIEW 3: ADMIN DASHBOARD & UPLOAD ĐỀ -->
     <!-- ------------------------------------------------------------- -->
     <section id="view-admin" class="hidden">
-      <!-- Admin Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-200">
-        <div>
-          <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center space-x-2">
-            <span>Bảng Quản Trị & Đăng Đề Thi</span>
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">Admin</span>
-          </h1>
-          <p class="text-sm text-gray-500 mt-0.5">Quản lý kho đề thi, tải đề tự động từ văn bản / Word và xem thống kê làm bài.</p>
-        </div>
-        <div class="flex items-center space-x-3">
-          <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-gray-100 border border-gray-200 text-xs font-semibold text-gray-700">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span id="admin-user-display">Quản Trị Viên (admin)</span>
-          </div>
+      <!-- Admin Header (Screenshot 4) -->
+      <div class="mb-5 sm:mb-6 pb-4 border-b border-gray-200 dark:border-gray-800">
+        <h1 class="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center space-x-2">
+          <span>Bảng Quản Trị & Đăng Đề Thi</span>
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400">Admin</span>
+        </h1>
+        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Quản lý kho đề thi, tải đề tự động từ văn bản / Word và xem thống kê làm bài.</p>
+      </div>
 
-          <button id="admin-change-account-btn" class="px-3 py-2 rounded-xl border border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 text-xs sm:text-sm font-semibold flex items-center space-x-1.5 transition-colors" title="Đổi tài khoản và mật khẩu quản trị">
-            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <!-- Admin User Status & Action Icons Bar (Screenshot 4) -->
+      <div class="flex items-center justify-between p-3 rounded-2xl bg-gray-100 dark:bg-[#111827] border border-gray-200 dark:border-gray-800 mb-5 sm:mb-6 shadow-2xs">
+        <div class="flex items-center space-x-2 text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="admin-user-display">Quản Trị Viên (admin)</span>
+        </div>
+        <div class="flex items-center space-x-1.5 sm:space-x-2">
+          <button id="admin-change-account-btn" class="p-2 sm:px-3 sm:py-1.5 rounded-xl border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-xs font-semibold flex items-center space-x-1.5 transition-colors" title="Đổi tài khoản và mật khẩu quản trị">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
             </svg>
-            <span>Đổi tài khoản</span>
+            <span class="hidden sm:inline">Đổi tài khoản</span>
           </button>
-
-          <button id="admin-logout-btn" class="px-3 py-2 rounded-xl border border-rose-200 text-rose-600 text-xs sm:text-sm font-semibold hover:bg-rose-50 flex items-center space-x-1.5 transition-colors" title="Đăng xuất khỏi hệ thống">
+          <button id="admin-logout-btn" class="p-2 sm:px-3 sm:py-1.5 rounded-xl border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 text-xs font-semibold hover:bg-rose-100 dark:hover:bg-rose-900/50 flex items-center space-x-1.5 transition-colors" title="Đăng xuất khỏi hệ thống">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
             </svg>
-            <span>Đăng xuất</span>
+            <span class="hidden sm:inline">Đăng xuất</span>
           </button>
-
-          <button id="admin-home-btn" class="px-4 py-2 rounded-xl border border-gray-200 text-gray-700 text-xs sm:text-sm font-semibold hover:bg-gray-50 flex items-center space-x-1.5">
+          <button id="admin-home-btn" class="p-2 sm:px-3 sm:py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-1.5 transition-colors" title="Về trang chủ">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
             </svg>
-            <span>Về trang chủ</span>
+            <span class="hidden sm:inline">Trang chủ</span>
           </button>
         </div>
       </div>
 
-      <!-- Admin Stats Cards Row -->
-      <div id="admin-stats-row" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <!-- Admin Stats Cards 2x2 Grid (Screenshot 4) -->
+      <div id="admin-stats-row" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <!-- Total Exams -->
-        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center space-x-4">
-          <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white dark:bg-[#111827] p-3.5 sm:p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-xs flex items-center space-x-3 sm:space-x-4">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
           </div>
           <div>
-            <div class="text-xs text-gray-500 font-medium">Tổng số đề thi</div>
-            <div id="admin-stat-exams" class="text-2xl font-black text-gray-900 mt-0.5">0</div>
+            <div class="text-2xs sm:text-xs text-gray-500 dark:text-gray-400 font-medium">Tổng số đề thi</div>
+            <div id="admin-stat-exams" class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mt-0.5">0</div>
           </div>
         </div>
 
         <!-- Total Questions -->
-        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center space-x-4">
-          <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white dark:bg-[#111827] p-3.5 sm:p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-xs flex items-center space-x-3 sm:space-x-4">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </div>
           <div>
-            <div class="text-xs text-gray-500 font-medium">Tổng câu hỏi</div>
-            <div id="admin-stat-questions" class="text-2xl font-black text-gray-900 mt-0.5">0</div>
+            <div class="text-2xs sm:text-xs text-gray-500 dark:text-gray-400 font-medium">Tổng câu hỏi</div>
+            <div id="admin-stat-questions" class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mt-0.5">0</div>
           </div>
         </div>
 
         <!-- Submissions -->
-        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center space-x-4">
-          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white dark:bg-[#111827] p-3.5 sm:p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-xs flex items-center space-x-3 sm:space-x-4">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
             </svg>
           </div>
           <div>
-            <div class="text-xs text-gray-500 font-medium">Lượt làm bài</div>
-            <div id="admin-stat-submissions" class="text-2xl font-black text-gray-900 mt-0.5">0</div>
+            <div class="text-2xs sm:text-xs text-gray-500 dark:text-gray-400 font-medium">Lượt làm bài</div>
+            <div id="admin-stat-submissions" class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mt-0.5">0</div>
           </div>
         </div>
 
         <!-- Average Score -->
-        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center space-x-4">
-          <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white dark:bg-[#111827] p-3.5 sm:p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-xs flex items-center space-x-3 sm:space-x-4">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
             </svg>
           </div>
           <div>
-            <div class="text-xs text-gray-500 font-medium">Điểm TB học viên</div>
-            <div id="admin-stat-avg" class="text-2xl font-black text-gray-900 mt-0.5">0.0</div>
+            <div class="text-2xs sm:text-xs text-gray-500 dark:text-gray-400 font-medium">Điểm TB học viên</div>
+            <div id="admin-stat-avg" class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mt-0.5">0.0</div>
           </div>
         </div>
       </div>
@@ -656,10 +724,22 @@
             </button>
           </div>
 
-          <div class="overflow-x-auto">
+          <!-- Mobile Card List View (Matching Screenshot 5) -->
+          <div class="md:hidden">
+            <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center space-x-2.5 bg-gray-50/50 dark:bg-gray-800/40">
+              <input type="checkbox" id="admin-select-all-exams-mobile" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer w-4 h-4">
+              <label for="admin-select-all-exams-mobile" class="text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer">Chọn tất cả</label>
+            </div>
+            <div id="admin-exams-cards-mobile" class="p-3 space-y-3">
+              <!-- Dynamically populated cards on mobile (Screenshot 5) -->
+            </div>
+          </div>
+
+          <!-- Desktop Table View (Hidden on mobile) -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
               <thead>
-                <tr class="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <tr class="bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   <th class="py-3 px-3 text-center w-10">
                     <input type="checkbox" id="admin-select-all-exams" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer w-4 h-4" title="Chọn tất cả">
                   </th>
@@ -671,7 +751,7 @@
                   <th class="py-3 px-4 text-right">Thao tác</th>
                 </tr>
               </thead>
-              <tbody id="admin-exams-table-body" class="divide-y divide-gray-100">
+              <tbody id="admin-exams-table-body" class="divide-y divide-gray-100 dark:divide-gray-800">
                 <!-- Dynamically populated -->
               </tbody>
             </table>

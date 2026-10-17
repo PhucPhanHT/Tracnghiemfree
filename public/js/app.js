@@ -356,17 +356,34 @@ const App = {
     const navStandardLinks = document.getElementById('nav-standard-links');
     const navBackBtn = document.getElementById('nav-back-btn');
     const titleContainer = document.getElementById('nav-exam-title-container');
+    const brandBtn = document.getElementById('nav-brand-btn');
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    const mobileBottomBar = document.getElementById('exam-mobile-bottom-bar');
+    const mobilePalette = document.getElementById('modal-question-palette');
 
     if (viewName === 'exam') {
       navExamControls?.classList.remove('hidden');
       navStandardLinks?.classList.add('hidden');
       navBackBtn?.classList.remove('hidden');
       titleContainer?.classList.remove('hidden');
+      mobileBottomBar?.classList.remove('hidden');
+
+      // Hide brand logo and theme toggle on mobile in exam view (Screenshot 2)
+      brandBtn?.classList.add('hidden');
+      brandBtn?.classList.remove('flex');
+      themeBtn?.classList.add('hidden');
     } else {
       navExamControls?.classList.add('hidden');
       navStandardLinks?.classList.remove('hidden');
       titleContainer?.classList.add('hidden');
       navBackBtn?.classList.add('hidden');
+      mobileBottomBar?.classList.add('hidden');
+      mobilePalette?.classList.add('hidden');
+
+      // Restore brand logo and theme toggle
+      brandBtn?.classList.remove('hidden');
+      brandBtn?.classList.add('flex');
+      themeBtn?.classList.remove('hidden');
 
       // Clear any exam timer
       if (ExamRunner.timerInterval) {
@@ -456,19 +473,19 @@ const App = {
 
       res.data.forEach(exam => {
         const card = document.createElement('div');
-        card.className = 'exam-card bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-all';
+        card.className = 'exam-card bg-white dark:bg-[#111827] rounded-2xl border border-gray-100 dark:border-gray-800 p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all';
 
         // Display badge text
         const badge = exam.badge_text || (exam.category ? exam.category.substring(0, 10) : 'Trắc nghiệm');
 
         card.innerHTML = `
           <div>
-            <!-- Top badge and Question count (Exact match of Image 3) -->
+            <!-- Top badge and Question count (Screenshot 1) -->
             <div class="flex items-center justify-between mb-3 text-xs">
-              <span class="px-2.5 py-1 rounded-md font-semibold bg-[#e6f9f0] text-[#00a86b]">
+              <span class="px-2.5 py-1 rounded-md font-semibold bg-[#e6f9f0] dark:bg-emerald-950/50 text-[#00a86b] dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40">
                 ${badge}
               </span>
-              <div class="flex items-center space-x-1 text-gray-500 font-medium">
+              <div class="flex items-center space-x-1 text-gray-500 dark:text-gray-400 font-medium">
                 <!-- Book/Question Icon -->
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -477,26 +494,26 @@ const App = {
               </div>
             </div>
 
-            <!-- Title (Exact match of Image 3) -->
-            <h3 class="text-base font-bold text-gray-900 tracking-tight leading-snug mb-2 line-clamp-2">
+            <!-- Title (Screenshot 1) -->
+            <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight leading-snug mb-1.5 line-clamp-2">
               ${exam.title}
             </h3>
 
             <!-- Description (Truncated) -->
-            <p class="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-6">
+            <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed mb-5">
               ${exam.description || 'Tổng hợp các câu hỏi trắc nghiệm rèn luyện tư duy và củng cố kiến thức.'}
             </p>
           </div>
 
-          <!-- Bottom Action Buttons (Matching Image 3: Luyện tập & Kiểm tra) -->
-          <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-gray-50">
+          <!-- Bottom Action Buttons (Screenshot 1: Luyện tập & Kiểm tra) -->
+          <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-gray-50 dark:border-gray-800">
             <!-- Luyện tập (Outline / Secondary) -->
-            <button class="btn-practice w-full py-2.5 rounded-xl border border-gray-200 text-gray-700 font-bold text-xs sm:text-sm hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50/50 transition-all text-center">
+            <button class="btn-practice w-full py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-bold text-xs sm:text-sm hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition-all text-center cursor-pointer">
               Luyện tập
             </button>
 
             <!-- Kiểm tra (Primary Emerald Green) -->
-            <button class="btn-test w-full py-2.5 rounded-xl bg-[#00a86b] hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-all text-center">
+            <button class="btn-test w-full py-2.5 rounded-xl bg-[#00a86b] hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm shadow-sm transition-all text-center cursor-pointer">
               Kiểm tra
             </button>
           </div>

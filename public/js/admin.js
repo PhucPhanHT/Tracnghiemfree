@@ -134,11 +134,23 @@ const AdminController = {
       }
     });
 
-    // Admin List Batch Selection
+    // Admin List Batch Selection (Desktop)
     document.getElementById('admin-select-all-exams')?.addEventListener('change', (e) => {
       const checked = e.target.checked;
       const rowCbs = document.querySelectorAll('.admin-exam-row-cb');
       rowCbs.forEach(cb => cb.checked = checked);
+      const mobileSelectAll = document.getElementById('admin-select-all-exams-mobile');
+      if (mobileSelectAll) mobileSelectAll.checked = checked;
+      this.updateAdminBatchToolbar();
+    });
+
+    // Admin List Batch Selection (Mobile)
+    document.getElementById('admin-select-all-exams-mobile')?.addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      const rowCbs = document.querySelectorAll('.admin-exam-row-cb');
+      rowCbs.forEach(cb => cb.checked = checked);
+      const desktopSelectAll = document.getElementById('admin-select-all-exams');
+      if (desktopSelectAll) desktopSelectAll.checked = checked;
       this.updateAdminBatchToolbar();
     });
 
@@ -1036,6 +1048,7 @@ Giải thích: Quy luật mâu thuẫn (thống nhất và đấu tranh giữa c
     const toolbar = document.getElementById('admin-batch-actions');
     const countEl = document.getElementById('admin-batch-count');
     const selectAllCb = document.getElementById('admin-select-all-exams');
+    const selectAllMobile = document.getElementById('admin-select-all-exams-mobile');
 
     if (countEl) countEl.textContent = checkedBoxes.length;
 
@@ -1048,19 +1061,24 @@ Giải thích: Quy luật mâu thuẫn (thống nhất và đấu tranh giữa c
     }
 
     const allRowCbs = document.querySelectorAll('.admin-exam-row-cb');
-    if (selectAllCb && allRowCbs.length > 0) {
-      selectAllCb.checked = checkedBoxes.length === allRowCbs.length;
+    if (allRowCbs.length > 0) {
+      const isAllSelected = checkedBoxes.length === allRowCbs.length;
+      if (selectAllCb) selectAllCb.checked = isAllSelected;
+      if (selectAllMobile) selectAllMobile.checked = isAllSelected;
     }
   },
 
   // Load Exams Table
   async loadExamsTable() {
     const tbody = document.getElementById('admin-exams-table-body');
+    const mobileCardsContainer = document.getElementById('admin-exams-cards-mobile');
     if (!tbody) return;
 
-    // Reset batch toolbar
+    // Reset batch toolbar & select all checkboxes
     const selectAllCb = document.getElementById('admin-select-all-exams');
+    const selectAllMobile = document.getElementById('admin-select-all-exams-mobile');
     if (selectAllCb) selectAllCb.checked = false;
+    if (selectAllMobile) selectAllMobile.checked = false;
     this.updateAdminBatchToolbar();
 
     try {
@@ -1068,14 +1086,20 @@ Giải thích: Quy luật mâu thuẫn (thống nhất và đấu tranh giữa c
       if (!res.success) return;
 
       tbody.innerHTML = '';
+      if (mobileCardsContainer) mobileCardsContainer.innerHTML = '';
+
       if (res.data.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-500">Chưa có đề thi nào trong cơ sở dữ liệu.</td></tr>`;
+        if (mobileCardsContainer) {
+          mobileCardsContainer.innerHTML = `<div class="text-center py-8 text-gray-500 text-xs">Chưa có đề thi nào trong cơ sở dữ liệu.</div>`;
+        }
         return;
       }
 
       res.data.forEach(exam => {
+        // Desktop Table Row
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-50 transition-colors';
+        tr.className = 'hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors';
 
         tr.innerHTML = `
           <td class="py-3 px-3 text-center">
@@ -1083,27 +1107,27 @@ Giải thích: Quy luật mâu thuẫn (thống nhất và đấu tranh giữa c
           </td>
           <td class="py-3 px-3 font-mono text-xs text-gray-500">#${exam.id}</td>
           <td class="py-3 px-4">
-            <div class="font-bold text-gray-900">${exam.title}</div>
+            <div class="font-bold text-gray-900 dark:text-white">${exam.title}</div>
             <div class="text-xs text-gray-400 line-clamp-1">${exam.description || 'Không có mô tả'}</div>
           </td>
           <td class="py-3 px-4">
-            <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30">
               ${exam.category}
             </span>
           </td>
-          <td class="py-3 px-4 text-center font-bold text-gray-700">${exam.question_count} câu</td>
-          <td class="py-3 px-4 text-center text-gray-600">${exam.duration_minutes} phút</td>
+          <td class="py-3 px-4 text-center font-bold text-gray-700 dark:text-gray-300">${exam.question_count} câu</td>
+          <td class="py-3 px-4 text-center text-gray-600 dark:text-gray-400">${exam.duration_minutes} phút</td>
           <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
-            <button onclick="AdminController.openEditExam(${exam.id})" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-colors inline-flex items-center space-x-1">
+            <button onclick="AdminController.openEditExam(${exam.id})" class="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-400 text-xs font-bold transition-colors inline-flex items-center space-x-1">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
               </svg>
               <span>Sửa</span>
             </button>
-            <button onclick="App.openExam(${exam.id}, 'test')" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition-colors inline-flex items-center space-x-1">
+            <button onclick="App.openExam(${exam.id}, 'test')" class="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-400 text-xs font-bold transition-colors inline-flex items-center space-x-1">
               <span>Thi thử</span>
             </button>
-            <button onclick="AdminController.deleteExam(${exam.id}, '${exam.title.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-colors inline-flex items-center space-x-1">
+            <button onclick="AdminController.deleteExam(${exam.id}, '${exam.title.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-700 dark:text-rose-400 text-xs font-bold transition-colors inline-flex items-center space-x-1">
               <span>Xóa</span>
             </button>
           </td>
@@ -1111,8 +1135,56 @@ Giải thích: Quy luật mâu thuẫn (thống nhất và đấu tranh giữa c
 
         const rowCb = tr.querySelector('.admin-exam-row-cb');
         rowCb.addEventListener('change', () => this.updateAdminBatchToolbar());
-
         tbody.appendChild(tr);
+
+        // Mobile Card (Screenshot 5)
+        if (mobileCardsContainer) {
+          const mCard = document.createElement('div');
+          mCard.className = 'p-4 rounded-2xl bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 shadow-2xs space-y-3';
+          mCard.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <input type="checkbox" value="${exam.id}" data-qcount="${exam.question_count}" data-title="${exam.title.replace(/"/g, '&quot;')}" class="admin-exam-row-cb rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer w-4 h-4">
+                <span class="font-mono text-xs text-gray-400 font-bold">#${exam.id}</span>
+              </div>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30">
+                ${exam.category}
+              </span>
+            </div>
+
+            <div>
+              <h4 class="text-sm font-bold text-gray-900 dark:text-white leading-snug">${exam.title}</h4>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">${exam.description || 'Không có mô tả'}</p>
+            </div>
+
+            <div class="flex items-center space-x-4 text-xs font-semibold text-gray-600 dark:text-gray-300 pt-1 border-t border-gray-100 dark:border-gray-800/80">
+              <span class="flex items-center space-x-1">
+                <span>📝</span>
+                <span>${exam.question_count} câu</span>
+              </span>
+              <span class="flex items-center space-x-1">
+                <span>⏱️</span>
+                <span>${exam.duration_minutes} phút</span>
+              </span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+              <button onclick="AdminController.openEditExam(${exam.id})" class="w-full py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 hover:bg-blue-100 text-xs font-bold transition-colors text-center">
+                Sửa
+              </button>
+              <button onclick="App.openExam(${exam.id}, 'test')" class="w-full py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 text-xs font-bold transition-colors text-center">
+                Thi thử
+              </button>
+              <button onclick="AdminController.deleteExam(${exam.id}, '${exam.title.replace(/'/g, "\\'")}')" class="w-full py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 hover:bg-rose-100 text-xs font-bold transition-colors text-center">
+                Xóa
+              </button>
+            </div>
+          `;
+
+          const mRowCb = mCard.querySelector('.admin-exam-row-cb');
+          mRowCb.addEventListener('change', () => this.updateAdminBatchToolbar());
+          mobileCardsContainer.appendChild(mCard);
+        }
       });
     } catch (err) {
       console.error('Failed to load exams table:', err);
