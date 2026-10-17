@@ -65,6 +65,11 @@ function requireAdminAuth(req, res, next) {
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Health check endpoint for keep-alive pings (Cron-job.org / UptimeRobot)
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
 // ================= ADMIN AUTH ENDPOINTS =================
 
 // Admin Login
