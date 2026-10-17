@@ -173,10 +173,6 @@ const ExamRunner = {
     this.updateStatsBanner();
     this.setActiveQuestion(1, false);
 
-    // Show mobile bottom navigation bar on mobile
-    const bottomBar = document.getElementById('exam-mobile-bottom-bar');
-    if (bottomBar) bottomBar.classList.remove('hidden');
-
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
@@ -226,30 +222,43 @@ const ExamRunner = {
   updateTimerDisplay() {
     const timerText = document.getElementById('nav-timer-text');
     const timerContainer = document.getElementById('nav-timer');
-    if (!timerText) return;
+    const subTimerText = document.getElementById('exam-sub-timer-text');
+    const subTimerBtn = document.getElementById('exam-sub-timer');
+
+    let formattedTime = '';
+    let isWarning = false;
 
     if (this.isUnlimited || this.mode === 'practice') {
       const mins = Math.floor(this.timeSpentSeconds / 60);
       const secs = this.timeSpentSeconds % 60;
-      timerText.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}${this.isUnlimited ? ' (Tự do)' : ''}`;
-      if (timerContainer) {
-        timerContainer.classList.remove('bg-rose-100', 'text-rose-700');
-        timerContainer.classList.add('bg-gray-100', 'text-gray-700');
+      formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}${this.isUnlimited ? ' (Tự do)' : ''}`;
+    } else {
+      const mins = Math.floor(this.remainingSeconds / 60);
+      const secs = this.remainingSeconds % 60;
+      formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      if (this.remainingSeconds < 300) {
+        isWarning = true;
       }
-      return;
     }
 
-    const mins = Math.floor(this.remainingSeconds / 60);
-    const secs = this.remainingSeconds % 60;
-    timerText.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    if (timerText) timerText.textContent = formattedTime;
+    if (subTimerText) subTimerText.textContent = formattedTime;
 
     if (timerContainer) {
-      if (this.remainingSeconds < 300) {
+      if (isWarning) {
         timerContainer.classList.add('bg-rose-100', 'text-rose-700');
         timerContainer.classList.remove('bg-gray-100', 'text-gray-700');
       } else {
         timerContainer.classList.remove('bg-rose-100', 'text-rose-700');
         timerContainer.classList.add('bg-gray-100', 'text-gray-700');
+      }
+    }
+
+    if (subTimerBtn) {
+      if (isWarning) {
+        subTimerBtn.className = 'flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-rose-600 dark:text-rose-400 font-mono text-xs sm:text-sm font-bold bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 shadow-2xs cursor-pointer';
+      } else {
+        subTimerBtn.className = 'flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-emerald-600 dark:text-emerald-400 font-mono text-xs sm:text-sm font-bold bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 shadow-2xs cursor-pointer';
       }
     }
   },
@@ -313,23 +322,23 @@ const ExamRunner = {
 
       const card = document.createElement('div');
       card.id = `q-card-${displayNum}`;
-      card.className = `question-card bg-white dark:bg-[#111827] rounded-2xl border p-4 sm:p-6 transition-all ${
-        isActive ? 'block active-question border-emerald-500 shadow-sm ring-1 ring-emerald-500/20' : 'hidden lg:block border-gray-200 dark:border-gray-800 shadow-xs'
+      card.className = `question-card bg-white dark:bg-[#111827] rounded-2xl border p-4 sm:p-6 transition-all block ${
+        isActive ? 'active-question border-emerald-500 shadow-sm ring-1 ring-emerald-500/20' : 'border-gray-200 dark:border-gray-800 shadow-xs'
       }`;
 
-      // Card Header (Matching Screenshot 2: CÂU X on top, followed by question text)
+      // Card Header (Matching exact Screenshot: green circle badge with number next to question text)
       const headerDiv = document.createElement('div');
-      headerDiv.className = 'mb-4';
+      headerDiv.className = 'flex items-start mb-3.5 sm:mb-4';
 
-      const qLabel = document.createElement('div');
-      qLabel.className = 'text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1.5';
-      qLabel.textContent = `CÂU ${displayNum}`;
+      const qBadge = document.createElement('div');
+      qBadge.className = 'w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#00a86b] text-white flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 mr-2.5 mt-0.5 shadow-xs';
+      qBadge.textContent = displayNum;
 
       const qText = document.createElement('h3');
-      qText.className = 'text-base sm:text-lg font-bold text-gray-900 dark:text-white leading-snug';
+      qText.className = 'text-sm sm:text-base font-bold text-gray-900 dark:text-white leading-snug pt-0.5 min-w-0 flex-grow';
       qText.textContent = this.cleanQuestionText(q.question_text);
 
-      headerDiv.appendChild(qLabel);
+      headerDiv.appendChild(qBadge);
       headerDiv.appendChild(qText);
       card.appendChild(headerDiv);
 
@@ -680,16 +689,16 @@ const ExamRunner = {
   setActiveQuestion(displayNum, shouldScroll = true) {
     this.activeQuestionNumber = displayNum;
 
-    // Mobile single question visibility + desktop all questions visibility
+    // Highlight active card without hiding others (all questions visible for smooth continuous scrolling)
     document.querySelectorAll('.question-card').forEach(c => {
-      c.classList.remove('block', 'active-question', 'border-emerald-500', 'ring-1', 'ring-emerald-500/20');
-      c.classList.add('hidden', 'lg:block', 'border-gray-200', 'dark:border-gray-800');
+      c.classList.remove('active-question', 'border-emerald-500', 'ring-1', 'ring-emerald-500/20');
+      c.classList.add('border-gray-200', 'dark:border-gray-800');
     });
 
     const activeCard = document.getElementById(`q-card-${displayNum}`);
     if (activeCard) {
-      activeCard.classList.remove('hidden', 'border-gray-200', 'dark:border-gray-800');
-      activeCard.classList.add('block', 'active-question', 'border-emerald-500', 'ring-1', 'ring-emerald-500/20');
+      activeCard.classList.remove('border-gray-200', 'dark:border-gray-800');
+      activeCard.classList.add('active-question', 'border-emerald-500', 'ring-1', 'ring-emerald-500/20');
 
       if (shouldScroll) {
         activeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -826,10 +835,12 @@ const ExamRunner = {
 
     // In Practice Mode, re-render immediately to reveal right/wrong badges & AI explanation
     if (this.mode === 'practice') {
+      const scrollPos = window.scrollY;
       this.renderQuestions();
       this.renderPalette();
       this.renderMobilePalette();
       this.updateStatsBanner();
+      window.scrollTo(0, scrollPos);
       this.setActiveQuestion(displayNum, false);
       return;
     }

@@ -235,7 +235,7 @@
     <!-- ------------------------------------------------------------- -->
     <!-- VIEW 2: GIAO DIỆN LÀM BÀI (Matching Screenshot 2 & 3) -->
     <!-- ------------------------------------------------------------- -->
-    <section id="view-exam" class="hidden pb-24 lg:pb-0">
+    <section id="view-exam" class="hidden pb-12">
       <div class="flex flex-col lg:flex-row gap-8 items-start">
         
         <!-- Left Main: Question Cards List -->
@@ -249,6 +249,56 @@
             </div>
             <div class="text-xs text-gray-500 dark:text-gray-400" id="answered-stat-banner">
               Đã làm: <b class="text-emerald-700 dark:text-emerald-400" id="stat-answered-count">0</b>/<span id="stat-total-count">0</span> câu
+            </div>
+          </div>
+
+          <!-- Exam Mobile Sub-Header Bar (Matching Screenshot: [🔀 Tráo câu] & [⊞ Bảng câu hỏi] & [⏱ 00:02 (Tự do)]) -->
+          <div class="flex items-center justify-between pb-3.5 mb-2 border-b border-gray-100 dark:border-gray-800/80">
+            <!-- Tráo câu button (Screenshot) -->
+            <button type="button" onclick="ExamRunner.shuffleExam(true)" class="px-3.5 py-1.5 rounded-xl border border-amber-600/40 bg-amber-500/10 text-amber-500 dark:text-amber-400 font-bold text-xs flex items-center space-x-1.5 hover:bg-amber-500/20 transition-colors shadow-2xs cursor-pointer" title="Đảo ngẫu nhiên lại thứ tự câu hỏi">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              <span>Tráo câu</span>
+            </button>
+
+            <div class="flex items-center space-x-2">
+              <!-- Nút Bảng câu hỏi trên mobile -->
+              <button type="button" onclick="ExamRunner.openMobilePalette()" class="lg:hidden px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold text-xs flex items-center space-x-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-2xs cursor-pointer" title="Xem bảng danh sách để nhảy nhanh đến câu hỏi">
+                <svg class="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"/>
+                </svg>
+                <span>Bảng câu hỏi</span>
+              </button>
+
+              <!-- Đồng hồ hiển thị thời gian (Screenshot: ⏱ 00:02 (Tự do)) -->
+              <div class="relative">
+                <button type="button" id="exam-sub-timer" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-emerald-600 dark:text-emerald-400 font-mono text-xs sm:text-sm font-bold bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 shadow-2xs cursor-pointer" title="Bấm để điều chỉnh giờ làm bài">
+                  <svg class="w-4 h-4 text-emerald-500 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span id="exam-sub-timer-text">00:00 (Tự do)</span>
+                </button>
+
+                <!-- Sub Timer Dropdown -->
+                <div id="exam-sub-timer-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-2.5 z-50">
+                  <div class="text-2xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5 px-1">⏱️ Điều chỉnh giờ</div>
+                  <div class="space-y-1 text-xs font-semibold">
+                    <button type="button" onclick="ExamRunner.addExtraTime(5); document.getElementById('exam-sub-timer-dropdown').classList.add('hidden');" class="w-full text-left px-2 py-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-400 text-gray-700 dark:text-gray-200 flex items-center justify-between transition-colors">
+                      <span>+5 phút</span>
+                      <span class="text-emerald-600 font-bold">+300s</span>
+                    </button>
+                    <button type="button" onclick="ExamRunner.addExtraTime(15); document.getElementById('exam-sub-timer-dropdown').classList.add('hidden');" class="w-full text-left px-2 py-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-400 text-gray-700 dark:text-gray-200 flex items-center justify-between transition-colors">
+                      <span>+15 phút</span>
+                      <span class="text-emerald-600 font-bold">+900s</span>
+                    </button>
+                    <button type="button" onclick="ExamRunner.setUnlimitedTime(); document.getElementById('exam-sub-timer-dropdown').classList.add('hidden');" class="w-full text-left px-2 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-700 dark:hover:text-blue-400 text-gray-700 dark:text-gray-200 flex items-center justify-between transition-colors">
+                      <span>Không giới hạn</span>
+                      <span class="text-blue-600 font-bold">∞ Tự do</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

@@ -330,10 +330,23 @@ const App = {
       navTimerDropdown?.classList.toggle('hidden');
     });
 
+    // Sub Timer Dropdown Popover (Mobile / Sub-header)
+    const subTimerBtn = document.getElementById('exam-sub-timer');
+    const subTimerDropdown = document.getElementById('exam-sub-timer-dropdown');
+    subTimerBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      subTimerDropdown?.classList.toggle('hidden');
+    });
+
     document.addEventListener('click', (e) => {
       if (!navTimerDropdown?.classList.contains('hidden')) {
         if (!navTimerBtn?.contains(e.target) && !navTimerDropdown?.contains(e.target)) {
           navTimerDropdown?.classList.add('hidden');
+        }
+      }
+      if (!subTimerDropdown?.classList.contains('hidden')) {
+        if (!subTimerBtn?.contains(e.target) && !subTimerDropdown?.contains(e.target)) {
+          subTimerDropdown?.classList.add('hidden');
         }
       }
     });
@@ -366,9 +379,9 @@ const App = {
       navStandardLinks?.classList.add('hidden');
       navBackBtn?.classList.remove('hidden');
       titleContainer?.classList.remove('hidden');
-      mobileBottomBar?.classList.remove('hidden');
+      mobileBottomBar?.classList.add('hidden');
 
-      // Hide brand logo and theme toggle on mobile in exam view (Screenshot 2)
+      // Hide brand logo and theme toggle on mobile in exam view (Screenshot)
       brandBtn?.classList.add('hidden');
       brandBtn?.classList.remove('flex');
       themeBtn?.classList.add('hidden');
