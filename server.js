@@ -204,14 +204,48 @@ app.post('/api/admin/logout', (req, res) => {
 
 // ================= PUBLIC EXAM & AI ENDPOINTS =================
 
-// AI Explanation & Interactive Q&A (Google Gemini API with smart offline fallback)
+// Cache detected active Gemini model in memory
+let detectedGeminiModel = process.env.GEMINI_MODEL || null;
+
+async function resolveGeminiModel(apiKey) {
+  if (detectedGeminiModel) return detectedGeminiModel;
+
+  try {
+    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (listRes.ok) {
+      const data = await listRes.json();
+      const models = data.models || [];
+      const supported = models
+        .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+        .map(m => m.name.replace(/^models\//, ''));
+
+      // Preferred order: gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-flash, etc.
+      const preferred = supported.find(m => m.includes('2.5-flash'))
+        || supported.find(m => m.includes('2.0-flash'))
+        || supported.find(m => m.includes('1.5-flash'))
+        || supported.find(m => m.includes('flash'))
+        || supported[0];
+
+      if (preferred) {
+        detectedGeminiModel = preferred;
+        console.log(`[Gemini API] Auto-selected supported model: ${detectedGeminiModel}`);
+        return detectedGeminiModel;
+      }
+    }
+  } catch (err) {
+    console.warn('[Gemini API] Error listing models:', err.message);
+  }
+
+  return 'gemini-2.0-flash';
+}
+
+// AI Explanation & Interactive Q&A (Google Gemini API with auto-model detection & smart fallback)
 app.post('/api/ai/ask', async (req, res) => {
   try {
     const { questionText, options = {}, correctAnswer, userChoice, prompt } = req.body;
     const userPrompt = (prompt || '').trim();
 
     const apiKey = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
 
     if (apiKey) {
       try {
@@ -227,46 +261,72 @@ app.post('/api/ai/ask', async (req, res) => {
           contentsText = `Câu hỏi / Thắc mắc của học viên: "${userPrompt}"\n\nHãy giải đáp chi tiết, súc tích, dễ hiểu cho học viên.`;
         }
 
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const aiResponse = await fetch(geminiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: 'user',
-                parts: [
-                  { text: systemInstruction + '\n\n' + contentsText }
-                ]
+        const activeModel = await resolveGeminiModel(apiKey);
+        const candidateModels = Array.from(new Set([
+          activeModel,
+          'gemini-2.5-flash',
+          'gemini-2.0-flash',
+          'gemini-2.0-flash-exp',
+          'gemini-1.5-flash-latest',
+          'gemini-1.5-flash',
+          'gemini-1.5-pro'
+        ]));
+
+        let aiAnswer = '';
+        for (const candidate of candidateModels) {
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${candidate}:generateContent?key=${apiKey}`;
+          const aiResponse = await fetch(geminiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  role: 'user',
+                  parts: [
+                    { text: systemInstruction + '\n\n' + contentsText }
+                  ]
+                }
+              ],
+              generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 1024
               }
-            ],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 1024
+            })
+          });
+
+          if (aiResponse.ok) {
+            const aiData = await aiResponse.json();
+            const rawAnswer = aiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            if (rawAnswer) {
+              detectedGeminiModel = candidate;
+              aiAnswer = rawAnswer
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                .replace(/`([^`]+)`/g, '<code class="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-emerald-600 font-mono text-xs">$1</code>')
+                .replace(/\n\n/g, '<br><br>')
+                .replace(/\n/g, '<br>');
+              break;
             }
-          })
-        });
-
-        if (aiResponse.ok) {
-          const aiData = await aiResponse.json();
-          const rawAnswer = aiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          if (rawAnswer) {
-            const formatted = rawAnswer
-              .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-              .replace(/\*(.*?)\*/g, '<i>$1</i>')
-              .replace(/`([^`]+)`/g, '<code class="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-emerald-600 font-mono text-xs">$1</code>')
-              .replace(/\n\n/g, '<br><br>')
-              .replace(/\n/g, '<br>');
-
-            return res.json({
-              success: true,
-              isLiveAi: true,
-              answer: formatted
-            });
+          } else {
+            const errData = await aiResponse.json().catch(() => ({}));
+            console.warn(`[Gemini API] Model ${candidate} returned ${aiResponse.status}:`, errData?.error?.message || errData);
+            if (aiResponse.status !== 404) {
+              // Non-404 error (e.g. invalid key or rate limit)
+              break;
+            }
           }
-        } else {
-          const errData = await aiResponse.json().catch(() => ({}));
-          console.warn('[Gemini API] Request failed:', aiResponse.status, errData);
+        }
+
+        if (aiAnswer) {
+          return res.json({
+            success: true,
+            isLiveAi: true,
+            model: detectedGeminiModel,
+            answer: aiAnswer
+          });
         }
       } catch (geminiErr) {
         console.warn('[Gemini API] Error calling Google Gemini:', geminiErr.message);
