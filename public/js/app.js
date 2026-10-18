@@ -285,7 +285,8 @@ const App = {
         return;
       }
 
-      const durationMinutes = parseInt(document.getElementById('combine-custom-duration')?.value, 10) || 0;
+      const durVal = document.getElementById('combine-custom-duration')?.value;
+      const durationMinutes = (durVal !== '' && !isNaN(Number(durVal))) ? parseInt(durVal, 10) : 45;
       const maxQuestions = parseInt(document.getElementById('combine-max-questions')?.value, 10) || 0;
       const mode = document.querySelector('input[name="combine_mode"]:checked')?.value || 'practice';
 
@@ -300,7 +301,8 @@ const App = {
           examIds,
           duration_minutes: durationMinutes,
           max_questions: maxQuestions,
-          deduplicate: true,
+          maxQuestions,
+          deduplicate: false,
           shuffle: true
         });
 

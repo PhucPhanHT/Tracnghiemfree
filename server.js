@@ -4,7 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
 const mammoth = require('mammoth');
-const { initDb, run, get, all } = require('./db');
+const { initDb, run, get, all, isPg } = require('./db');
 const { parseExamText } = require('./parser');
 
 const app = express();
@@ -325,7 +325,11 @@ app.get('/api/exams/:id', async (req, res) => {
 // 3.5 Combine multiple exams on-the-fly for practice / test (Public)
 app.post('/api/exams/combine', async (req, res) => {
   try {
-    const { examIds, duration_minutes, maxQuestions, shuffle = true, deduplicate = true } = req.body;
+    const { examIds, duration_minutes, shuffle = true, deduplicate = false } = req.body;
+    const maxQ = req.body.max_questions !== undefined ? req.body.max_questions : req.body.maxQuestions;
+    const isDedup = deduplicate === true || deduplicate === 'true' || deduplicate === 'on';
+    const isShuffle = shuffle !== false && shuffle !== 'false';
+
     if (!examIds || !Array.isArray(examIds) || examIds.length === 0) {
       return res.status(400).json({ success: false, error: 'Vui lòng chọn ít nhất 1 bộ đề thi để gộp' });
     }
@@ -343,10 +347,11 @@ app.post('/api/exams/combine', async (req, res) => {
     );
 
     let finalQuestions = [];
-    if (deduplicate) {
+    if (isDedup) {
+      const clean = str => (str || '').trim().toLowerCase().replace(/\s+/g, ' ');
       const seen = new Set();
       for (const q of rawQuestions) {
-        const key = (q.question_text || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        const key = [clean(q.question_text), clean(q.option_a), clean(q.option_b), clean(q.option_c), clean(q.option_d)].join('|||');
         if (!seen.has(key)) {
           seen.add(key);
           finalQuestions.push(q);
@@ -356,15 +361,15 @@ app.post('/api/exams/combine', async (req, res) => {
       finalQuestions = [...rawQuestions];
     }
 
-    if (shuffle) {
+    if (isShuffle) {
       for (let i = finalQuestions.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [finalQuestions[i], finalQuestions[j]] = [finalQuestions[j], finalQuestions[i]];
       }
     }
 
-    if (maxQuestions && Number(maxQuestions) > 0 && Number(maxQuestions) < finalQuestions.length) {
-      finalQuestions = finalQuestions.slice(0, Number(maxQuestions));
+    if (maxQ && Number(maxQ) > 0 && Number(maxQ) < finalQuestions.length) {
+      finalQuestions = finalQuestions.slice(0, Number(maxQ));
     }
 
     // Number sequentially
@@ -374,7 +379,7 @@ app.post('/api/exams/combine', async (req, res) => {
       question_number: idx + 1
     }));
 
-    const duration = duration_minutes !== undefined ? parseInt(duration_minutes, 10) : 45;
+    const duration = (duration_minutes !== undefined && !isNaN(Number(duration_minutes))) ? parseInt(duration_minutes, 10) : 45;
     const combinedTitle = exams.length === 1 
       ? exams[0].title 
       : `Đề gộp (${exams.length} đề): ${exams[0].title} (+${exams.length - 1} đề khác)`;
@@ -709,23 +714,28 @@ app.post('/api/admin/exams/merge', requireAdminAuth, async (req, res) => {
       description,
       duration_minutes,
       badge_text,
-      maxQuestions,
       shuffle = true,
       deduplicate = true
     } = req.body;
+    const maxQ = req.body.max_questions !== undefined ? req.body.max_questions : req.body.maxQuestions;
+    const isDedup = deduplicate !== false && deduplicate !== 'false';
+    const isShuffle = shuffle !== false && shuffle !== 'false';
 
     if (!examIds || !Array.isArray(examIds) || examIds.length < 2) {
       return res.status(400).json({ success: false, error: 'Vui lòng chọn ít nhất 2 bộ đề để gộp' });
-    }
-
-    if (!title || !title.trim()) {
-      return res.status(400).json({ success: false, error: 'Vui lòng nhập tên cho đề thi gộp mới' });
     }
 
     const placeholders = examIds.map(() => '?').join(',');
     const exams = await all(`SELECT id, title, category FROM exams WHERE id IN (${placeholders})`, examIds);
     if (!exams || exams.length === 0) {
       return res.status(404).json({ success: false, error: 'Không tìm thấy các đề thi đã chọn' });
+    }
+
+    let finalTitle = title && title.trim() ? title.trim() : '';
+    if (!finalTitle) {
+      finalTitle = exams.length === 2
+        ? `Đề gộp: ${exams[0].title} + ${exams[1].title}`
+        : `Đề thi tổng hợp (${exams.length} đề thi)`;
     }
 
     const rawQuestions = await all(
@@ -739,10 +749,11 @@ app.post('/api/admin/exams/merge', requireAdminAuth, async (req, res) => {
     }
 
     let mergedQuestions = [];
-    if (deduplicate) {
+    if (isDedup) {
+      const clean = str => (str || '').trim().toLowerCase().replace(/\s+/g, ' ');
       const seen = new Set();
       for (const q of rawQuestions) {
-        const key = (q.question_text || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        const key = [clean(q.question_text), clean(q.option_a), clean(q.option_b), clean(q.option_c), clean(q.option_d)].join('|||');
         if (!seen.has(key)) {
           seen.add(key);
           mergedQuestions.push(q);
@@ -752,51 +763,64 @@ app.post('/api/admin/exams/merge', requireAdminAuth, async (req, res) => {
       mergedQuestions = [...rawQuestions];
     }
 
-    if (shuffle) {
+    if (isShuffle) {
       for (let i = mergedQuestions.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [mergedQuestions[i], mergedQuestions[j]] = [mergedQuestions[j], mergedQuestions[i]];
       }
     }
 
-    if (maxQuestions && Number(maxQuestions) > 0 && Number(maxQuestions) < mergedQuestions.length) {
-      mergedQuestions = mergedQuestions.slice(0, Number(maxQuestions));
+    if (maxQ && Number(maxQ) > 0 && Number(maxQ) < mergedQuestions.length) {
+      mergedQuestions = mergedQuestions.slice(0, Number(maxQ));
     }
 
     const finalCategory = category && category.trim() ? category.trim() : (exams[0].category || 'Tổng hợp');
     const finalDesc = description && description.trim() 
       ? description.trim() 
       : `Đề thi gộp từ ${exams.length} bộ đề (${exams.map(e => e.title).join(', ')})`;
-    const finalDuration = parseInt(duration_minutes, 10) || 60;
-    const finalBadge = badge_text && badge_text.trim() ? badge_text.trim() : 'Gộp đề';
+    const finalDuration = (duration_minutes !== undefined && !isNaN(Number(duration_minutes))) ? parseInt(duration_minutes, 10) : 45;
+    const finalBadge = badge_text && badge_text.trim() ? badge_text.trim() : 'Tổng hợp';
 
     // Insert new Exam
     const examRes = await run(
       `INSERT INTO exams (title, category, description, duration_minutes, badge_text)
        VALUES (?, ?, ?, ?, ?)`,
-      [title.trim(), finalCategory, finalDesc, finalDuration, finalBadge]
+      [finalTitle, finalCategory, finalDesc, finalDuration, finalBadge]
     );
 
     const newExamId = examRes.lastID;
 
-    // Insert questions
-    for (let i = 0; i < mergedQuestions.length; i++) {
-      const q = mergedQuestions[i];
-      await run(
-        `INSERT INTO questions (exam_id, question_number, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          newExamId,
-          i + 1,
-          q.question_text,
-          q.option_a || '',
-          q.option_b || '',
-          q.option_c || '',
-          q.option_d || '',
-          (q.correct_answer || 'A').toUpperCase(),
-          q.explanation || ''
-        ]
-      );
+    // Fast batch insertion with transaction support for SQLite
+    if (!isPg) {
+      await run('BEGIN TRANSACTION');
+    }
+    try {
+      for (let i = 0; i < mergedQuestions.length; i++) {
+        const q = mergedQuestions[i];
+        await run(
+          `INSERT INTO questions (exam_id, question_number, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            newExamId,
+            i + 1,
+            q.question_text,
+            q.option_a || '',
+            q.option_b || '',
+            q.option_c || '',
+            q.option_d || '',
+            (q.correct_answer || 'A').toUpperCase(),
+            q.explanation || ''
+          ]
+        );
+      }
+      if (!isPg) {
+        await run('COMMIT');
+      }
+    } catch (insertErr) {
+      if (!isPg) {
+        try { await run('ROLLBACK'); } catch (_) {}
+      }
+      throw insertErr;
     }
 
     res.json({
@@ -804,7 +828,7 @@ app.post('/api/admin/exams/merge', requireAdminAuth, async (req, res) => {
       message: `Đã gộp thành công ${exams.length} bộ đề thành đề mới với ${mergedQuestions.length} câu hỏi!`,
       data: {
         id: newExamId,
-        title: title.trim(),
+        title: finalTitle,
         question_count: mergedQuestions.length,
         duration_minutes: finalDuration
       }

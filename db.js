@@ -984,7 +984,8 @@ module.exports = {
   run,
   get,
   all,
-  initDb
+  initDb,
+  isPg
 };
 
 

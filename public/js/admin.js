@@ -161,8 +161,7 @@ const AdminController = {
         showToast('Vui lòng chọn ít nhất 2 bộ đề để gộp!', 'error');
         return;
       }
-      this.switchTab('merge');
-      this.loadMergeExams(ids);
+      this.switchTab('merge', ids);
     });
 
     // Admin Merge Tab Category Filter
@@ -202,6 +201,8 @@ const AdminController = {
         adminMergeDurPills.forEach(p => {
           if (p === btn) {
             p.className = 'merge-dur-btn active px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition-all shadow-2xs cursor-pointer';
+          } else if (p.dataset.mins === '0') {
+            p.className = 'merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all cursor-pointer';
           } else {
             p.className = 'merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer';
           }
@@ -214,10 +215,20 @@ const AdminController = {
       adminMergeDurPills.forEach(p => {
         if (p.dataset.mins === val) {
           p.className = 'merge-dur-btn active px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition-all shadow-2xs cursor-pointer';
+        } else if (p.dataset.mins === '0') {
+          p.className = 'merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all cursor-pointer';
         } else {
           p.className = 'merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer';
         }
       });
+    });
+
+    // Track user custom typing in merge title and category
+    document.getElementById('admin-merge-title')?.addEventListener('input', (e) => {
+      e.target._userEdited = Boolean(e.target.value.trim());
+    });
+    document.getElementById('admin-merge-category')?.addEventListener('input', (e) => {
+      e.target._userEdited = Boolean(e.target.value.trim());
     });
 
     // Admin Merge Submit Button
@@ -442,7 +453,7 @@ const AdminController = {
     }
   },
 
-  switchTab(tab) {
+  switchTab(tab, extraData = null) {
     const tabs = ['upload', 'list', 'merge', 'history'];
     tabs.forEach(t => {
       const btn = document.getElementById(`admin-tab-${t}-btn`);
@@ -459,7 +470,7 @@ const AdminController = {
     });
 
     if (tab === 'list') this.loadExamsTable();
-    if (tab === 'merge') this.loadMergeExams();
+    if (tab === 'merge') this.loadMergeExams(Array.isArray(extraData) ? extraData : []);
     if (tab === 'history') this.loadSubmissionsTable();
   },
 
@@ -1247,31 +1258,54 @@ Giải thích: Quy luật mâu thuẫn (thống nhất và đấu tranh giữa c
         listEl.appendChild(item);
       });
 
-      this.updateMergeSelectedSummary();
-
-      // Auto-suggest title if preselected
+      // Reset edit flag for clean suggestions if opening afresh
       const titleInput = document.getElementById('admin-merge-title');
       const catInput = document.getElementById('admin-merge-category');
-      if (titleInput && (!titleInput.value || titleInput.value.startsWith('Đề thi tổng hợp'))) {
-        if (selectedTitles.length >= 2) {
-          titleInput.value = `Đề thi tổng hợp (${selectedTitles.length} đề thi)`;
-        }
-      }
-      if (catInput && !catInput.value && res.data.length > 0) {
-        catInput.value = res.data[0].category || 'Tổng hợp';
-      }
+      if (titleInput && !titleInput.value) titleInput._userEdited = false;
+      if (catInput && !catInput.value) catInput._userEdited = false;
+
+      this.updateMergeSelectedSummary();
     } catch (err) {
       listEl.innerHTML = `<div class="col-span-full text-center py-6 text-rose-500 text-xs">Lỗi kết nối: ${err.message}</div>`;
     }
   },
 
-  // Update Summary Badge in Admin Merge Tab
+  // Update Summary Badge & Auto-suggest Title in Admin Merge Tab
   updateMergeSelectedSummary() {
     const checkedBoxes = Array.from(document.querySelectorAll('.admin-merge-cb:checked'));
     const totalCount = checkedBoxes.reduce((sum, cb) => sum + (parseInt(cb.dataset.qcount, 10) || 0), 0);
     const summaryEl = document.getElementById('admin-merge-selected-summary');
     if (summaryEl) {
       summaryEl.textContent = `Đã chọn: ${checkedBoxes.length} đề (${totalCount} câu)`;
+    }
+
+    const titleInput = document.getElementById('admin-merge-title');
+    const catInput = document.getElementById('admin-merge-category');
+
+    // Auto-suggest title if user hasn't manually entered a custom title
+    if (titleInput && (!titleInput._userEdited || !titleInput.value.trim())) {
+      if (checkedBoxes.length >= 2) {
+        const titles = checkedBoxes.map(cb => cb.dataset.title).filter(Boolean);
+        if (titles.length === 2) {
+          titleInput.value = `Đề gộp: ${titles[0]} + ${titles[1]}`;
+        } else {
+          titleInput.value = `Đề thi tổng hợp (${checkedBoxes.length} bộ đề)`;
+        }
+      } else if (checkedBoxes.length === 1) {
+        titleInput.value = `Đề thi tổng hợp: ${checkedBoxes[0].dataset.title || ''}`;
+      } else {
+        titleInput.value = '';
+      }
+    }
+
+    // Auto-suggest category if user hasn't manually entered a custom category
+    if (catInput && (!catInput._userEdited || !catInput.value.trim())) {
+      const selectedCats = Array.from(new Set(checkedBoxes.map(cb => cb.closest('.admin-merge-item')?.dataset.cat).filter(Boolean)));
+      if (selectedCats.length === 1) {
+        catInput.value = selectedCats[0];
+      } else if (selectedCats.length > 1) {
+        catInput.value = 'Tổng hợp';
+      }
     }
   },
 
@@ -1285,17 +1319,19 @@ Giải thích: Quy luật mâu thuẫn (thống nhất và đấu tranh giữa c
       return;
     }
 
-    const title = document.getElementById('admin-merge-title')?.value.trim();
+    let title = document.getElementById('admin-merge-title')?.value.trim();
     if (!title) {
-      showToast('Vui lòng nhập tên cho đề thi gộp mới!', 'error');
-      document.getElementById('admin-merge-title')?.focus();
-      return;
+      const titles = checkedBoxes.map(cb => cb.dataset.title).filter(Boolean);
+      title = titles.length === 2 ? `Đề gộp: ${titles[0]} + ${titles[1]}` : `Đề thi tổng hợp (${examIds.length} bộ đề)`;
+      const titleEl = document.getElementById('admin-merge-title');
+      if (titleEl) titleEl.value = title;
     }
 
     const category = document.getElementById('admin-merge-category')?.value.trim() || 'Tổng hợp';
     const description = document.getElementById('admin-merge-desc')?.value.trim() || '';
     const badge_text = document.getElementById('admin-merge-badge')?.value.trim() || 'Tổng hợp';
-    const duration_minutes = parseInt(document.getElementById('admin-merge-duration')?.value, 10) || 45;
+    const durVal = document.getElementById('admin-merge-duration')?.value;
+    const duration_minutes = (durVal !== '' && !isNaN(Number(durVal))) ? parseInt(durVal, 10) : 45;
     const max_questions = parseInt(document.getElementById('admin-merge-max-q')?.value, 10) || 0;
     const deduplicate = document.getElementById('admin-merge-dedup')?.checked ?? true;
     const shuffle = document.getElementById('admin-merge-shuffle')?.checked ?? true;
@@ -1318,6 +1354,7 @@ Giải thích: Quy luật mâu thuẫn (thống nhất và đấu tranh giữa c
         badge_text,
         duration_minutes,
         max_questions,
+        maxQuestions: max_questions,
         deduplicate,
         shuffle
       });
@@ -1326,8 +1363,13 @@ Giải thích: Quy luật mâu thuẫn (thống nhất và đấu tranh giữa c
         showToast(`Gộp đề thành công! Bộ đề mới "${res.data.title}" (#${res.data.id}) đã được lưu với ${res.data.question_count} câu hỏi.`, 'success');
 
         // Reset title & desc
-        document.getElementById('admin-merge-title').value = '';
-        document.getElementById('admin-merge-desc').value = '';
+        const titleEl = document.getElementById('admin-merge-title');
+        if (titleEl) {
+          titleEl.value = '';
+          titleEl._userEdited = false;
+        }
+        const descEl = document.getElementById('admin-merge-desc');
+        if (descEl) descEl.value = '';
 
         // Reload dashboard & switch to list tab
         await this.loadDashboard();

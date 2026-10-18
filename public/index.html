@@ -886,12 +886,13 @@
                 <button type="button" class="merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="60">60 phút</button>
                 <button type="button" class="merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="90">90 phút</button>
                 <button type="button" class="merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-500 transition-all cursor-pointer" data-mins="120">120 phút</button>
+                <button type="button" class="merge-dur-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all cursor-pointer" data-mins="0">∞ Không giới hạn</button>
               </div>
 
-              <div class="flex items-center space-x-2 max-w-xs">
+              <div class="flex items-center space-x-2 max-w-sm">
                 <span class="text-xs text-gray-600 font-medium">Hoặc tự nhập:</span>
-                <input type="number" id="admin-merge-duration" value="45" min="5" max="360" class="w-24 px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-bold bg-white text-center focus:ring-1 focus:ring-emerald-500">
-                <span class="text-xs text-gray-500 font-semibold">phút</span>
+                <input type="number" id="admin-merge-duration" value="45" min="0" max="360" class="w-24 px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-bold bg-white text-center focus:ring-1 focus:ring-emerald-500">
+                <span class="text-xs text-gray-500 font-semibold">phút (0 = không giới hạn)</span>
               </div>
             </div>
 
