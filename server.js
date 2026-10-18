@@ -204,36 +204,106 @@ app.post('/api/admin/logout', (req, res) => {
 
 // ================= PUBLIC EXAM & AI ENDPOINTS =================
 
-// AI Explanation & Interactive Q&A
-app.post('/api/ai/ask', (req, res) => {
+// AI Explanation & Interactive Q&A (Google Gemini API with smart offline fallback)
+app.post('/api/ai/ask', async (req, res) => {
   try {
     const { questionText, options = {}, correctAnswer, userChoice, prompt } = req.body;
-    const correctOptText = options[correctAnswer] || '';
-    const userOptText = userChoice ? (options[userChoice] || '') : '';
+    const userPrompt = (prompt || '').trim();
 
-    let answer = '';
-    const lowerPrompt = (prompt || '').toLowerCase();
+    const apiKey = process.env.GEMINI_API_KEY;
+    const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
 
-    if (lowerPrompt.includes('đơn giản') || lowerPrompt.includes('dễ hiểu')) {
-      answer = `💡 <b>Giải thích giản dị, dễ hiểu nhất:</b><br>
-Trọng tâm câu hỏi này yêu cầu bạn tìm ra cốt lõi: <b>${correctOptText}</b> (Phương án ${correctAnswer}).<br>
-Hãy hình dung: Khi loài người bắt đầu tư duy về thế giới, câu hỏi nền tảng nhất luôn là: <i>"Vật chất bên ngoài có trước, hay ý thức/suy nghĩ trong đầu ta có trước? Và con người có khả năng nhận thức thế giới không?"</i>. Đó chính là mối quan hệ biện chứng giữa tư duy và tồn tại!`;
-    } else if (lowerPrompt.includes('ví dụ') || lowerPrompt.includes('thực tế')) {
-      answer = `🔍 <b>Ví dụ thực tế sinh động:</b><br>
-- <b>Vật chất (Tồn tại):</b> Mặt trời, trái đất và các quy luật tự nhiên đã tồn tại độc lập hàng tỷ năm trước khi có con người.<br>
-- <b>Ý thức (Tư duy):</b> Khi con người ra đời, quan sát hiện tượng và đúc kết thành các định luật khoa học, đó là tư duy phản ánh tồn tại khách quan.`;
-    } else if (lowerPrompt.includes('phân biệt') || (userChoice && userChoice !== correctAnswer)) {
-      answer = `⚖️ <b>Phân biệt chi tiết giữa phương án đúng và phương án sai:</b><br>
-• <b>Đáp án đúng (${correctAnswer}):</b> "${correctOptText}" - Đây là vấn đề cơ bản xuyên suốt mọi trường phái triết học từ cổ chí kim.<br>
-• <b>Phương án chọn (${userChoice}):</b> "${userOptText}" - Đây chỉ là một nội dung bộ phận hoặc phương diện hẹp, thường là đáp án bẫy để đánh tráo khái niệm.`;
-    } else {
-      answer = `🤖 <b>Phản hồi từ Gemini AI:</b><br>
-Về câu hỏi: <i>"${questionText}"</i><br>
-- <b>Đáp án chuẩn xác:</b> <b>${correctAnswer}. ${correctOptText}</b><br>
-- <b>Lời khuyên ôn thi:</b> Hãy chú ý gạch chân cụm từ khóa định nghĩa chuẩn để loại trừ nhanh các phương án nhiễu chỉ nêu một khía cạnh phiến diện.`;
+    if (apiKey) {
+      try {
+        const systemInstruction = 'Bạn là Trợ lý Gia sư AI chuyên nghiệp của nền tảng luyện thi trắc nghiệm đại học UniPrep. Bạn luôn giải thích một cách dễ hiểu, chính xác, súc tích, mang tính sư phạm cao bằng tiếng Việt. Sử dụng định dạng HTML cơ bản (<b>, <i>, <ul>, <li>, <br>) để làm nổi bật từ khóa và phân đoạn rõ ràng.';
+
+        let contentsText = '';
+        if (questionText) {
+          const optsText = Object.entries(options)
+            .map(([k, v]) => `${k}. ${v}`)
+            .join('\n');
+          contentsText = `Câu hỏi trắc nghiệm:\n${questionText}\n\nCác phương án:\n${optsText}\n\nĐáp án đúng: ${correctAnswer || 'Chưa xác định'}\n${userChoice ? `Học viên đã chọn: ${userChoice}\n` : ''}\nYêu cầu của học viên: "${userPrompt}"\n\nHãy giải thích và hướng dẫn cho học viên theo yêu cầu trên.`;
+        } else {
+          contentsText = `Câu hỏi / Thắc mắc của học viên: "${userPrompt}"\n\nHãy giải đáp chi tiết, súc tích, dễ hiểu cho học viên.`;
+        }
+
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const aiResponse = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [
+                  { text: systemInstruction + '\n\n' + contentsText }
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 1024
+            }
+          })
+        });
+
+        if (aiResponse.ok) {
+          const aiData = await aiResponse.json();
+          const rawAnswer = aiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          if (rawAnswer) {
+            const formatted = rawAnswer
+              .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+              .replace(/\*(.*?)\*/g, '<i>$1</i>')
+              .replace(/`([^`]+)`/g, '<code class="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-emerald-600 font-mono text-xs">$1</code>')
+              .replace(/\n\n/g, '<br><br>')
+              .replace(/\n/g, '<br>');
+
+            return res.json({
+              success: true,
+              isLiveAi: true,
+              answer: formatted
+            });
+          }
+        } else {
+          const errData = await aiResponse.json().catch(() => ({}));
+          console.warn('[Gemini API] Request failed:', aiResponse.status, errData);
+        }
+      } catch (geminiErr) {
+        console.warn('[Gemini API] Error calling Google Gemini:', geminiErr.message);
+      }
     }
 
-    res.json({ success: true, answer });
+    // Smart Offline Fallback (when GEMINI_API_KEY is not set or network fails)
+    const correctOptText = options[correctAnswer] || '';
+    const userOptText = userChoice ? (options[userChoice] || '') : '';
+    let answer = '';
+    const lowerPrompt = userPrompt.toLowerCase();
+
+    if (!questionText) {
+      answer = `🤖 <b>Trợ lý UniPrep AI:</b><br>
+Chào bạn! Tôi là trợ lý học tập trực tuyến. Bạn có thể hỏi về kiến thức các môn học như <b>Quân sự QPAN</b>, <b>Triết học</b>, phương pháp ghi nhớ từ khóa hoặc giải thích câu hỏi trắc nghiệm.<br><br>
+<i>💡 Mẹo: Để kích hoạt trí tuệ nhân tạo Gemini AI trực tiếp từ Google, Quản trị viên chỉ cần thêm <code>GEMINI_API_KEY</code> vào file <code>.env</code> hoặc cấu hình Environment Variables trên Render.</i>`;
+    } else if (lowerPrompt.includes('đơn giản') || lowerPrompt.includes('dễ hiểu')) {
+      answer = `💡 <b>Giải thích giản dị, dễ hiểu:</b><br>
+Trọng tâm câu hỏi này nằm ở cốt lõi: <b>${correctOptText ? `${correctAnswer}. ${correctOptText}` : `Phương án ${correctAnswer}`}</b>.<br>
+Hãy ghi nhớ từ khóa chính của câu hỏi: <i>"${questionText.slice(0, 80)}..."</i> gắn liền trực tiếp với bản chất của đáp án đúng.`;
+    } else if (lowerPrompt.includes('ví dụ') || lowerPrompt.includes('thực tế')) {
+      answer = `🔍 <b>Ví dụ minh họa thực tế:</b><br>
+Trong thực tiễn, khái niệm này được áp dụng để giải quyết các tình huống phát sinh, giúp phân biệt rõ giữa nguyên lý lý thuyết và các biểu hiện đời sống thực tế.<br>
+- <b>Bài học:</b> Luôn bám sát bản chất nguyên lý cốt lõi của đáp án <b>${correctAnswer}</b>.`;
+    } else if (lowerPrompt.includes('phân biệt') || (userChoice && userChoice !== correctAnswer)) {
+      answer = `⚖️ <b>Phân biệt phương án đúng (${correctAnswer}) và phương án chọn (${userChoice || 'khác'}):</b><br>
+• <b>Đáp án chuẩn (${correctAnswer}):</b> "${correctOptText || 'Khái niệm chuẩn xác'}" - Phản ánh đúng và đầy đủ nhất theo giáo trình chuẩn.<br>
+• <b>Phương án chọn (${userChoice || 'sai'}):</b> "${userOptText || 'Phương án khác'}" - Thường chỉ nêu một khía cạnh phiến diện hoặc dùng để đánh tráo khái niệm.`;
+    } else {
+      answer = `🤖 <b>Phản hồi hỗ trợ học tập:</b><br>
+Về câu hỏi: <i>"${questionText}"</i><br>
+- <b>Đáp án chuẩn xác:</b> <b>${correctAnswer}${correctOptText ? `. ${correctOptText}` : ''}</b><br>
+- <b>Mẹo ôn thi:</b> Chú ý các từ khóa mang tính định nghĩa, nguyên tắc cơ bản để loại trừ nhanh các phương án gây nhiễu.<br><br>
+<span class="text-2xs text-gray-400">💡 Thêm <code>GEMINI_API_KEY</code> trong .env để kết nối trực tiếp với Google Gemini AI.</span>`;
+    }
+
+    res.json({ success: true, isLiveAi: false, answer });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

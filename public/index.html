@@ -1370,8 +1370,88 @@
     </div>
   </div>
 
+  <!-- Global AI Study Assistant Floating Widget (Gemini AI) -->
+  <div id="global-ai-chat-container">
+    <!-- Floating Toggle Button -->
+    <button id="global-ai-chat-btn" type="button" class="fixed bottom-6 right-6 z-40 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs sm:text-sm shadow-xl shadow-emerald-700/30 hover:shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center space-x-2 cursor-pointer select-none" title="Mở Trợ lý học tập Gemini AI">
+      <span class="flex items-center justify-center w-5 h-5 rounded-full bg-white/20 text-xs">✨</span>
+      <span class="hidden sm:inline">Hỏi Gemini AI</span>
+      <span class="sm:hidden font-bold">Hỏi AI</span>
+    </button>
+
+    <!-- Floating Chat Window -->
+    <div id="global-ai-chat-drawer" class="hidden fixed bottom-20 right-3 sm:right-6 z-50 w-[94vw] sm:w-[380px] h-[520px] max-h-[82vh] bg-white dark:bg-[#111827] rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden animate-scale-up">
+      <!-- Chat Header -->
+      <div class="px-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex items-center justify-between shadow-xs shrink-0">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm shadow-inner">
+            🤖
+          </div>
+          <div>
+            <div class="font-bold text-xs sm:text-sm flex items-center space-x-1.5">
+              <span>Trợ lý Học tập Gemini AI</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+            </div>
+            <div class="text-2xs text-emerald-100 opacity-90">Hỏi đáp & giải thích bài học 24/7</div>
+          </div>
+        </div>
+        <div class="flex items-center space-x-1">
+          <button type="button" id="global-ai-chat-clear" class="p-1.5 rounded-lg text-emerald-100 hover:text-white hover:bg-white/10 transition-colors cursor-pointer" title="Làm mới hội thoại">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+          </button>
+          <button type="button" id="global-ai-chat-close" class="p-1.5 rounded-lg text-emerald-100 hover:text-white hover:bg-white/10 transition-colors cursor-pointer" title="Đóng chat">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages Area -->
+      <div id="global-ai-chat-messages" class="flex-grow overflow-y-auto p-3.5 space-y-3 text-xs sm:text-sm">
+        <!-- AI Welcome Message -->
+        <div class="flex items-start space-x-2">
+          <div class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-xs shrink-0 mt-0.5">
+            🤖
+          </div>
+          <div class="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 p-3 rounded-2xl rounded-tl-xs max-w-[85%] leading-relaxed">
+            Xin chào! Mình là <b>Trợ lý học tập AI</b> của UniPrep. Bạn có thắc mắc gì về bài học, cần mẹo nhớ từ khóa hay cần giải thích khái niệm nào không?
+          </div>
+        </div>
+
+        <!-- Suggestion Chips -->
+        <div class="pl-8 flex flex-wrap gap-1.5" id="global-ai-suggestions">
+          <button type="button" class="global-ai-chip px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 text-2xs font-semibold transition-colors cursor-pointer" data-prompt="Cách ghi nhớ nhanh các từ khóa môn Quân sự QPAN?">
+            💡 Mẹo nhớ từ khóa QPAN
+          </button>
+          <button type="button" class="global-ai-chip px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 text-2xs font-semibold transition-colors cursor-pointer" data-prompt="Tóm tắt ngắn gọn các bài thi Học phần 1 QPAN">
+            📚 Tóm tắt HP1 QPAN
+          </button>
+          <button type="button" class="global-ai-chip px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 text-2xs font-semibold transition-colors cursor-pointer" data-prompt="Mẹo làm bài thi trắc nghiệm không bị bẫy đáp án">
+            🎯 Mẹo tránh bẫy trắc nghiệm
+          </button>
+        </div>
+      </div>
+
+      <!-- Input Bar -->
+      <div class="p-2.5 border-t border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-900/60 shrink-0">
+        <form id="global-ai-chat-form" class="flex items-center space-x-1.5" onsubmit="event.preventDefault(); App.sendGlobalAiMessage();">
+          <input type="text" id="global-ai-chat-input" placeholder="Hỏi Gemini AI về bài học..." class="flex-grow px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs bg-white dark:bg-[#111827] text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+          <button type="submit" id="global-ai-chat-send" class="px-3.5 py-2 rounded-xl bg-[#00a86b] hover:bg-emerald-700 text-white font-bold text-xs shrink-0 flex items-center space-x-1 shadow-xs transition-colors cursor-pointer">
+            <span>Gửi</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+  <div id="toast-container" class="fixed bottom-20 right-6 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Application Scripts -->
   <script src="/js/api.js"></script>

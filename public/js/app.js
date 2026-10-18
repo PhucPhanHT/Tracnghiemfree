@@ -76,6 +76,7 @@ const App = {
   async init() {
     ThemeManager.init();
     this.bindEvents();
+    this.initGlobalAiChat();
     AdminController.init();
     await this.loadCategories();
     await this.loadExams();
@@ -678,6 +679,110 @@ const App = {
       }
     } catch (err) {
       showToast('Lỗi tải đề thi: ' + err.message, 'error');
+    }
+  },
+
+  // Initialize Global AI Chatbot Widget (Gemini AI)
+  initGlobalAiChat() {
+    const btn = document.getElementById('global-ai-chat-btn');
+    const drawer = document.getElementById('global-ai-chat-drawer');
+    const closeBtn = document.getElementById('global-ai-chat-close');
+    const clearBtn = document.getElementById('global-ai-chat-clear');
+
+    btn?.addEventListener('click', () => {
+      drawer?.classList.toggle('hidden');
+      if (!drawer?.classList.contains('hidden')) {
+        document.getElementById('global-ai-chat-input')?.focus();
+      }
+    });
+
+    closeBtn?.addEventListener('click', () => {
+      drawer?.classList.add('hidden');
+    });
+
+    clearBtn?.addEventListener('click', () => {
+      const messagesContainer = document.getElementById('global-ai-chat-messages');
+      if (messagesContainer) {
+        messagesContainer.innerHTML = `
+          <div class="flex items-start space-x-2">
+            <div class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-xs shrink-0 mt-0.5">🤖</div>
+            <div class="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 p-3 rounded-2xl rounded-tl-xs max-w-[85%] leading-relaxed text-xs sm:text-sm">
+              Hội thoại đã được làm mới. Bạn cần hỗ trợ gì về bài học hay mẹo ôn thi hôm nay?
+            </div>
+          </div>
+        `;
+      }
+    });
+
+    // Quick Prompt Chips
+    document.addEventListener('click', (e) => {
+      const chip = e.target.closest('.global-ai-chip');
+      if (chip && chip.dataset.prompt) {
+        const input = document.getElementById('global-ai-chat-input');
+        if (input) {
+          input.value = chip.dataset.prompt;
+          this.sendGlobalAiMessage();
+        }
+      }
+    });
+  },
+
+  // Send Global AI Message
+  async sendGlobalAiMessage() {
+    const input = document.getElementById('global-ai-chat-input');
+    const messagesContainer = document.getElementById('global-ai-chat-messages');
+    const sendBtn = document.getElementById('global-ai-chat-send');
+    const prompt = input?.value?.trim();
+    if (!prompt) return;
+
+    input.value = '';
+
+    // Remove suggestions after first message
+    document.getElementById('global-ai-suggestions')?.remove();
+
+    // Append user message bubble (Right side)
+    const userBubble = document.createElement('div');
+    userBubble.className = 'flex justify-end';
+    userBubble.innerHTML = `
+      <div class="bg-emerald-600 text-white p-3 rounded-2xl rounded-tr-xs max-w-[85%] leading-relaxed text-xs sm:text-sm shadow-xs break-words">
+        ${prompt.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+      </div>
+    `;
+    messagesContainer.appendChild(userBubble);
+
+    // Append AI loading bubble (Left side)
+    const aiBubble = document.createElement('div');
+    aiBubble.className = 'flex items-start space-x-2';
+    aiBubble.innerHTML = `
+      <div class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-xs shrink-0 mt-0.5">🤖</div>
+      <div class="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 p-3 rounded-2xl rounded-tl-xs max-w-[85%] leading-relaxed text-xs sm:text-sm">
+        <span class="text-gray-400 italic flex items-center space-x-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+          <span>Gemini AI đang suy nghĩ...</span>
+        </span>
+      </div>
+    `;
+    messagesContainer.appendChild(aiBubble);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    if (sendBtn) sendBtn.disabled = true;
+
+    try {
+      const res = await API.askAi({ prompt });
+      const contentDiv = aiBubble.querySelector('div:last-child');
+      if (res.success && contentDiv) {
+        contentDiv.innerHTML = res.answer;
+      } else if (contentDiv) {
+        contentDiv.textContent = res.error || 'Không nhận được phản hồi từ AI.';
+      }
+    } catch (err) {
+      const contentDiv = aiBubble.querySelector('div:last-child');
+      if (contentDiv) {
+        contentDiv.textContent = 'Lỗi kết nối AI: ' + err.message;
+      }
+    } finally {
+      if (sendBtn) sendBtn.disabled = false;
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
   }
 };
