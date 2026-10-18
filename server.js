@@ -219,10 +219,11 @@ async function resolveGeminiModel(apiKey) {
         .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
         .map(m => m.name.replace(/^models\//, ''));
 
-      // Preferred order: gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-flash, etc.
-      const preferred = supported.find(m => m.includes('2.5-flash'))
+      // Preferred order: Gemini 3.0 series first (Google recommendation), then 3.x, then flash models
+      const preferred = supported.find(m => m.includes('3.0-flash') || m.includes('3-flash'))
+        || supported.find(m => m.includes('3.'))
+        || supported.find(m => m.includes('2.5-flash'))
         || supported.find(m => m.includes('2.0-flash'))
-        || supported.find(m => m.includes('1.5-flash'))
         || supported.find(m => m.includes('flash'))
         || supported[0];
 
@@ -236,7 +237,7 @@ async function resolveGeminiModel(apiKey) {
     console.warn('[Gemini API] Error listing models:', err.message);
   }
 
-  return 'gemini-2.0-flash';
+  return 'gemini-3.0-flash';
 }
 
 // AI Explanation & Interactive Q&A (Google Gemini API with auto-model detection & smart fallback)
@@ -263,18 +264,19 @@ app.post('/api/ai/ask', async (req, res) => {
 
         const activeModel = await resolveGeminiModel(apiKey);
         const candidateModels = Array.from(new Set([
+          'gemini-3.0-flash',
+          'gemini-3-flash-preview',
+          'gemini-3-flash',
           activeModel,
           'gemini-2.5-flash',
-          'gemini-2.0-flash',
-          'gemini-2.0-flash-exp',
-          'gemini-1.5-flash-latest',
-          'gemini-1.5-flash',
-          'gemini-1.5-pro'
-        ]));
+          'gemini-2.0-flash'
+        ])).filter(Boolean);
 
         let aiAnswer = '';
-        for (const candidate of candidateModels) {
-          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${candidate}:generateContent?key=${apiKey}`;
+        for (let i = 0; i < candidateModels.length; i++) {
+          const candidate = candidateModels[i];
+          const modelName = candidate.replace(/^models\//, '');
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
           const aiResponse = await fetch(geminiUrl, {
             method: 'POST',
             headers: {
@@ -301,7 +303,7 @@ app.post('/api/ai/ask', async (req, res) => {
             const aiData = await aiResponse.json();
             const rawAnswer = aiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
             if (rawAnswer) {
-              detectedGeminiModel = candidate;
+              detectedGeminiModel = modelName;
               aiAnswer = rawAnswer
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
@@ -312,9 +314,18 @@ app.post('/api/ai/ask', async (req, res) => {
             }
           } else {
             const errData = await aiResponse.json().catch(() => ({}));
-            console.warn(`[Gemini API] Model ${candidate} returned ${aiResponse.status}:`, errData?.error?.message || errData);
-            if (aiResponse.status !== 404) {
-              // Non-404 error (e.g. invalid key or rate limit)
+            const errMsg = errData?.error?.message || '';
+            console.warn(`[Gemini API] Model ${modelName} returned ${aiResponse.status}:`, errMsg || errData);
+
+            // Auto-adapt if Google's response suggests a specific newer model
+            const match = errMsg.match(/use\s+models\/([\w.-]+)/i);
+            if (match && match[1] && !candidateModels.includes(match[1])) {
+              console.log(`[Gemini API] Auto-enqueuing Google recommended model: ${match[1]}`);
+              candidateModels.splice(i + 1, 0, match[1]);
+            }
+
+            if (aiResponse.status !== 404 && aiResponse.status !== 400) {
+              // Non-404 error (e.g. invalid key or quota limit)
               break;
             }
           }
