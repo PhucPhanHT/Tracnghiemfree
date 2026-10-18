@@ -250,7 +250,7 @@ app.post('/api/ai/ask', async (req, res) => {
 
     if (apiKey) {
       try {
-        const systemInstruction = 'Bạn là Trợ lý Gia sư AI chuyên nghiệp của nền tảng luyện thi trắc nghiệm đại học UniPrep. Bạn luôn giải thích một cách dễ hiểu, chính xác, súc tích, mang tính sư phạm cao bằng tiếng Việt. Sử dụng định dạng HTML cơ bản (<b>, <i>, <ul>, <li>, <br>) để làm nổi bật từ khóa và phân đoạn rõ ràng.';
+        const systemInstruction = 'Bạn là Trợ lý Gia sư AI chuyên nghiệp của nền tảng luyện thi trắc nghiệm đại học UniPrep. Bạn luôn giải thích một cách dễ hiểu, chính xác, đầy đủ và trọn vẹn câu trả lời (tuyệt đối không bị ngắt cụt giữa chừng), mang tính sư phạm cao bằng tiếng Việt. Sử dụng gạch đầu dòng rõ ràng và in đậm các từ khóa trọng tâm để học viên dễ nắm bắt.';
 
         let contentsText = '';
         if (questionText) {
@@ -294,7 +294,7 @@ app.post('/api/ai/ask', async (req, res) => {
               ],
               generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 1024
+                maxOutputTokens: 4096
               }
             })
           });
@@ -305,8 +305,11 @@ app.post('/api/ai/ask', async (req, res) => {
             if (rawAnswer) {
               detectedGeminiModel = modelName;
               aiAnswer = rawAnswer
+                .replace(/^### (.*$)/gim, '<div class="font-bold text-emerald-700 dark:text-emerald-400 mt-2 mb-1 text-sm">$1</div>')
+                .replace(/^## (.*$)/gim, '<div class="font-bold text-emerald-700 dark:text-emerald-400 mt-2 mb-1 text-base">$1</div>')
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                .replace(/^[*-]\s+(.*$)/gim, '• $1')
+                .replace(/(^|[^\*])\*([^\*\n]+)\*/g, '$1<i>$2</i>')
                 .replace(/`([^`]+)`/g, '<code class="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-emerald-600 font-mono text-xs">$1</code>')
                 .replace(/\n\n/g, '<br><br>')
                 .replace(/\n/g, '<br>');

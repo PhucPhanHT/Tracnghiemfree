@@ -755,7 +755,7 @@ const App = {
     aiBubble.className = 'flex items-start space-x-2';
     aiBubble.innerHTML = `
       <div class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-xs shrink-0 mt-0.5">🤖</div>
-      <div class="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 p-3 rounded-2xl rounded-tl-xs max-w-[85%] leading-relaxed text-xs sm:text-sm">
+      <div class="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 p-3 rounded-2xl rounded-tl-xs max-w-[85%] leading-relaxed text-xs sm:text-sm break-words">
         <span class="text-gray-400 italic flex items-center space-x-1.5">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
           <span>Gemini AI đang suy nghĩ...</span>
