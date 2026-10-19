@@ -1360,7 +1360,7 @@ Giải thích: Quy luật mâu thuẫn (thống nhất và đấu tranh giữa c
       });
 
       if (res.success && res.data) {
-        showToast(`Gộp đề thành công! Bộ đề mới "${res.data.title}" (#${res.data.id}) đã được lưu với ${res.data.question_count} câu hỏi.`, 'success');
+        showToast(res.message || `Gộp đề thành công! Bộ đề mới "${res.data.title}" (#${res.data.id}) đã được lưu với ${res.data.question_count} câu hỏi.`, 'success');
 
         // Reset title & desc
         const titleEl = document.getElementById('admin-merge-title');

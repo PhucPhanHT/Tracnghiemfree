@@ -466,12 +466,104 @@ app.get('/api/exams/:id', async (req, res) => {
   }
 });
 
+// --- Smart Question Deduplication Helpers ---
+function normalizeExamText(text) {
+  if (!text) return '';
+  return text
+    .normalize('NFC')
+    .toLowerCase()
+    .replace(/\u00a0/g, ' ')
+    .replace(/^(câu\s*\d+|bài\s*\d+(\s*câu\s*\d+)?|\d+[\.:\)\/\-–])\s*/i, '')
+    .replace(/^[\(\[]?[a-d][\)\]\.\:\-–\s]\s*/i, '')
+    .replace(/[\.,;:!\?\"'“”‘’`\-_–—\(\)\[\]\{\}\/\\…]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getNormalizedCorrectAnswer(q) {
+  const ansLetter = (q.correct_answer || 'A').trim().toUpperCase();
+  const key = `option_${ansLetter.toLowerCase()}`;
+  return normalizeExamText(q[key]);
+}
+
+function getSortedNormalizedOptions(q) {
+  return [
+    normalizeExamText(q.option_a),
+    normalizeExamText(q.option_b),
+    normalizeExamText(q.option_c),
+    normalizeExamText(q.option_d)
+  ].filter(Boolean).sort().join('###');
+}
+
+function areQuestionsDuplicate(q1, q2) {
+  const q1Text = normalizeExamText(q1.question_text);
+  const q2Text = normalizeExamText(q2.question_text);
+
+  if (q1Text !== q2Text) {
+    const minLen = Math.min(q1Text.length, q2Text.length);
+    if (minLen > 35 && Math.abs(q1Text.length - q2Text.length) <= 5) {
+      if (!q1Text.startsWith(q2Text.slice(0, 35)) && !q2Text.startsWith(q1Text.slice(0, 35))) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
+  // 1. If sorted normalized options match (regardless of A, B, C, D order)
+  const opts1 = getSortedNormalizedOptions(q1);
+  const opts2 = getSortedNormalizedOptions(q2);
+  if (opts1 && opts2 && opts1 === opts2) {
+    return true;
+  }
+
+  // 2. If correct answer texts match or have high word overlap
+  const ans1 = getNormalizedCorrectAnswer(q1);
+  const ans2 = getNormalizedCorrectAnswer(q2);
+  if (ans1 && ans2) {
+    if (ans1 === ans2) return true;
+
+    const words1 = new Set(ans1.split(' ').filter(w => w.length > 2));
+    const words2 = new Set(ans2.split(' ').filter(w => w.length > 2));
+    if (words1.size > 0 && words2.size > 0) {
+      let common = 0;
+      for (const w of words1) {
+        if (words2.has(w)) common++;
+      }
+      const overlap = (2 * common) / (words1.size + words2.size);
+      if (overlap >= 0.8) return true;
+    }
+  }
+
+  return false;
+}
+
+function deduplicateExamQuestions(questions) {
+  const result = [];
+  const buckets = new Map();
+
+  for (const q of questions) {
+    const normQ = normalizeExamText(q.question_text);
+    const bucketKey = normQ.slice(0, 40);
+    const candidates = buckets.get(bucketKey) || [];
+
+    const isDup = candidates.some(existing => areQuestionsDuplicate(existing, q));
+    if (!isDup) {
+      result.push(q);
+      candidates.push(q);
+      buckets.set(bucketKey, candidates);
+    }
+  }
+
+  return result;
+}
+
 // 3.5 Combine multiple exams on-the-fly for practice / test (Public)
 app.post('/api/exams/combine', async (req, res) => {
   try {
-    const { examIds, duration_minutes, shuffle = true, deduplicate = false } = req.body;
+    const { examIds, duration_minutes, shuffle = true, deduplicate = true } = req.body;
     const maxQ = req.body.max_questions !== undefined ? req.body.max_questions : req.body.maxQuestions;
-    const isDedup = deduplicate === true || deduplicate === 'true' || deduplicate === 'on';
+    const isDedup = deduplicate !== false && deduplicate !== 'false' && deduplicate !== 0 && deduplicate !== '0';
     const isShuffle = shuffle !== false && shuffle !== 'false';
 
     if (!examIds || !Array.isArray(examIds) || examIds.length === 0) {
@@ -490,20 +582,7 @@ app.post('/api/exams/combine', async (req, res) => {
       examIds
     );
 
-    let finalQuestions = [];
-    if (isDedup) {
-      const clean = str => (str || '').trim().toLowerCase().replace(/\s+/g, ' ');
-      const seen = new Set();
-      for (const q of rawQuestions) {
-        const key = [clean(q.question_text), clean(q.option_a), clean(q.option_b), clean(q.option_c), clean(q.option_d)].join('|||');
-        if (!seen.has(key)) {
-          seen.add(key);
-          finalQuestions.push(q);
-        }
-      }
-    } else {
-      finalQuestions = [...rawQuestions];
-    }
+    let finalQuestions = isDedup ? deduplicateExamQuestions(rawQuestions) : [...rawQuestions];
 
     if (isShuffle) {
       for (let i = finalQuestions.length - 1; i > 0; i--) {
@@ -528,8 +607,14 @@ app.post('/api/exams/combine', async (req, res) => {
       ? exams[0].title 
       : `Đề gộp (${exams.length} đề): ${exams[0].title} (+${exams.length - 1} đề khác)`;
 
+    const removedDupsCount = rawQuestions.length - finalQuestions.length;
+    const msg = (isDedup && removedDupsCount > 0)
+      ? `Đã gộp thành công ${exams.length} bộ đề (${finalQuestions.length} câu hỏi, đã tự động lọc ${removedDupsCount} câu trùng lặp)!`
+      : `Đã gộp thành công ${exams.length} bộ đề (${finalQuestions.length} câu hỏi)!`;
+
     res.json({
       success: true,
+      message: msg,
       data: {
         id: 'combined',
         isVirtual: true,
@@ -538,6 +623,7 @@ app.post('/api/exams/combine', async (req, res) => {
         description: `Bộ đề tổng hợp từ ${exams.length} đề thi: ${exams.map(e => e.title).join(', ')}`,
         duration_minutes: duration,
         question_count: finalQuestions.length,
+        removed_duplicates_count: removedDupsCount,
         questions: finalQuestions
       }
     });
@@ -892,20 +978,8 @@ app.post('/api/admin/exams/merge', requireAdminAuth, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Các đề được chọn không có câu hỏi nào' });
     }
 
-    let mergedQuestions = [];
-    if (isDedup) {
-      const clean = str => (str || '').trim().toLowerCase().replace(/\s+/g, ' ');
-      const seen = new Set();
-      for (const q of rawQuestions) {
-        const key = [clean(q.question_text), clean(q.option_a), clean(q.option_b), clean(q.option_c), clean(q.option_d)].join('|||');
-        if (!seen.has(key)) {
-          seen.add(key);
-          mergedQuestions.push(q);
-        }
-      }
-    } else {
-      mergedQuestions = [...rawQuestions];
-    }
+    let mergedQuestions = isDedup ? deduplicateExamQuestions(rawQuestions) : [...rawQuestions];
+    const removedDupsCount = rawQuestions.length - mergedQuestions.length;
 
     if (isShuffle) {
       for (let i = mergedQuestions.length - 1; i > 0; i--) {
@@ -967,13 +1041,18 @@ app.post('/api/admin/exams/merge', requireAdminAuth, async (req, res) => {
       throw insertErr;
     }
 
+    const msg = (isDedup && removedDupsCount > 0)
+      ? `Đã gộp thành công ${exams.length} bộ đề thành đề mới với ${mergedQuestions.length} câu hỏi (đã tự động lọc ${removedDupsCount} câu trùng lặp)!`
+      : `Đã gộp thành công ${exams.length} bộ đề thành đề mới với ${mergedQuestions.length} câu hỏi!`;
+
     res.json({
       success: true,
-      message: `Đã gộp thành công ${exams.length} bộ đề thành đề mới với ${mergedQuestions.length} câu hỏi!`,
+      message: msg,
       data: {
         id: newExamId,
         title: finalTitle,
         question_count: mergedQuestions.length,
+        removed_duplicates_count: removedDupsCount,
         duration_minutes: finalDuration
       }
     });

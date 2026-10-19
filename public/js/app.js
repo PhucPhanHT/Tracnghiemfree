@@ -290,6 +290,7 @@ const App = {
       const durationMinutes = (durVal !== '' && !isNaN(Number(durVal))) ? parseInt(durVal, 10) : 45;
       const maxQuestions = parseInt(document.getElementById('combine-max-questions')?.value, 10) || 0;
       const mode = document.querySelector('input[name="combine_mode"]:checked')?.value || 'practice';
+      const deduplicate = document.getElementById('combine-dedup-checkbox')?.checked ?? true;
 
       const btn = document.getElementById('combine-start-btn');
       if (btn) {
@@ -303,7 +304,7 @@ const App = {
           duration_minutes: durationMinutes,
           max_questions: maxQuestions,
           maxQuestions,
-          deduplicate: false,
+          deduplicate,
           shuffle: true
         });
 
@@ -311,7 +312,7 @@ const App = {
           document.getElementById('modal-combine-exam')?.classList.add('hidden');
           this.showView('exam');
           ExamRunner.startExam(res.data, mode, null, durationMinutes);
-          showToast(`Đã gộp thành công ${examIds.length} bộ đề (${res.data.questions.length} câu hỏi)!`, 'success');
+          showToast(res.message || `Đã gộp thành công ${examIds.length} bộ đề (${res.data.questions.length} câu hỏi)!`, 'success');
         } else {
           showToast(res.error || 'Không thể gộp đề thi.', 'error');
         }
