@@ -291,6 +291,7 @@ const App = {
       const maxQuestions = parseInt(document.getElementById('combine-max-questions')?.value, 10) || 0;
       const mode = document.querySelector('input[name="combine_mode"]:checked')?.value || 'practice';
       const deduplicate = document.getElementById('combine-dedup-checkbox')?.checked ?? true;
+      const shuffle = document.getElementById('combine-shuffle-checkbox')?.checked ?? true;
 
       const btn = document.getElementById('combine-start-btn');
       if (btn) {
@@ -305,7 +306,7 @@ const App = {
           max_questions: maxQuestions,
           maxQuestions,
           deduplicate,
-          shuffle: true
+          shuffle
         });
 
         if (res.success && res.data) {

@@ -27,21 +27,30 @@ const ExamRunner = {
     return text.replace(/^(?:c[âa]u\s*\d+[\s.:\-–—]|\d+[\s.:\)\/–—])\s*/i, '').trim();
   },
 
-  // Fisher-Yates Shuffle Algorithm to randomize questions
-  // Ensures order is genuinely different when array.length > 1
+  // Fisher-Yates Shuffle Algorithm with high-entropy randomness
+  // Ensures order is genuinely different and uniformly distributed
   shuffleArray(array) {
     if (!array || array.length <= 1) return [...(array || [])];
     const arr = [...array];
+    const getRandom = () => {
+      if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+        const uint = new Uint32Array(1);
+        window.crypto.getRandomValues(uint);
+        return uint[0] / (0xffffffff + 1);
+      }
+      return Math.random();
+    };
+
     let attempts = 0;
     let isSameOrder = true;
 
     while (isSameOrder && attempts < 10) {
       for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(getRandom() * (i + 1));
         [arr[i], arr[j]] = [arr[j], arr[i]];
       }
       // Check if order changed
-      isSameOrder = arr.every((item, idx) => item.id === array[idx].id);
+      isSameOrder = arr.every((item, idx) => (item.id || item.question_number) === (array[idx].id || array[idx].question_number));
       attempts++;
     }
     return arr;

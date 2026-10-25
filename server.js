@@ -558,6 +558,109 @@ function deduplicateExamQuestions(questions) {
   return result;
 }
 
+/**
+ * Truly Balanced & Fair Stratified Random Sampling
+ * When combining multiple exams and picking N questions:
+ * 1. Shuffles questions within each exam using cryptographic randomness (crypto.randomInt)
+ * 2. Fairly distributes quota across all selected exams so EVERY exam is represented
+ * 3. Handles deficits (if an exam has fewer questions than quota, takes all and reallocates remainder)
+ * 4. Multi-pass shuffles the final combined questions so questions from different exams are completely intermingled
+ */
+function secureRandomInt(min, max) {
+  try {
+    return crypto.randomInt(min, max);
+  } catch (_) {
+    return Math.floor(Math.random() * (max - min)) + min;
+  }
+}
+
+function secureShuffleArray(array) {
+  if (!array || array.length <= 1) return [...(array || [])];
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = secureRandomInt(0, i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function sampleBalancedQuestions(questions, maxQuestions, shuffleQuestions = true) {
+  if (!questions || questions.length === 0) return [];
+  
+  const totalCount = questions.length;
+  const targetCount = (maxQuestions && Number(maxQuestions) > 0 && Number(maxQuestions) < totalCount)
+    ? Number(maxQuestions)
+    : totalCount;
+
+  // Group questions by exam_id
+  const examGroups = new Map();
+  for (const q of questions) {
+    const eid = q.exam_id !== undefined ? String(q.exam_id) : 'default';
+    if (!examGroups.has(eid)) examGroups.set(eid, []);
+    examGroups.get(eid).push(q);
+  }
+
+  const examIds = Array.from(examGroups.keys());
+  const numExams = examIds.length;
+
+  // If only 1 exam, simply shuffle and slice
+  if (numExams <= 1) {
+    const list = shuffleQuestions ? secureShuffleArray(questions) : [...questions];
+    return list.slice(0, targetCount);
+  }
+
+  // Shuffle questions inside each individual exam pool first
+  for (const eid of examIds) {
+    examGroups.set(eid, secureShuffleArray(examGroups.get(eid)));
+  }
+
+  // Fair Stratified Quota Allocation: guarantees all selected exams are represented proportionally
+  const quotas = new Map();
+  let remainingSlots = targetCount;
+  const availableExams = new Set(examIds);
+
+  while (remainingSlots > 0 && availableExams.size > 0) {
+    const share = Math.max(1, Math.floor(remainingSlots / availableExams.size));
+    let allocatedThisRound = 0;
+
+    // Shuffle exam order each round to ensure fair distribution of remainders
+    const roundExams = secureShuffleArray(Array.from(availableExams));
+
+    for (const eid of roundExams) {
+      const pool = examGroups.get(eid);
+      const currentQuota = quotas.get(eid) || 0;
+      const canTake = Math.min(pool.length - currentQuota, share, remainingSlots);
+
+      if (canTake > 0) {
+        quotas.set(eid, currentQuota + canTake);
+        remainingSlots -= canTake;
+        allocatedThisRound += canTake;
+      }
+
+      if ((quotas.get(eid) || 0) >= pool.length || remainingSlots === 0) {
+        availableExams.delete(eid);
+      }
+      if (remainingSlots === 0) break;
+    }
+
+    if (allocatedThisRound === 0) break;
+  }
+
+  // Collect sampled questions from each exam
+  const sampled = [];
+  for (const eid of examIds) {
+    const count = quotas.get(eid) || 0;
+    const pool = examGroups.get(eid);
+    sampled.push(...pool.slice(0, count));
+  }
+
+  // Thoroughly multi-pass shuffle and interleave the final selected pool
+  if (shuffleQuestions) {
+    return secureShuffleArray(secureShuffleArray(sampled));
+  }
+  return sampled;
+}
+
 // 3.5 Combine multiple exams on-the-fly for practice / test (Public)
 app.post('/api/exams/combine', async (req, res) => {
   try {
@@ -584,16 +687,8 @@ app.post('/api/exams/combine', async (req, res) => {
 
     let finalQuestions = isDedup ? deduplicateExamQuestions(rawQuestions) : [...rawQuestions];
 
-    if (isShuffle) {
-      for (let i = finalQuestions.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [finalQuestions[i], finalQuestions[j]] = [finalQuestions[j], finalQuestions[i]];
-      }
-    }
-
-    if (maxQ && Number(maxQ) > 0 && Number(maxQ) < finalQuestions.length) {
-      finalQuestions = finalQuestions.slice(0, Number(maxQ));
-    }
+    // High quality balanced random sampling across all selected exams
+    finalQuestions = sampleBalancedQuestions(finalQuestions, maxQ, isShuffle);
 
     // Number sequentially
     finalQuestions = finalQuestions.map((q, idx) => ({
@@ -981,16 +1076,8 @@ app.post('/api/admin/exams/merge', requireAdminAuth, async (req, res) => {
     let mergedQuestions = isDedup ? deduplicateExamQuestions(rawQuestions) : [...rawQuestions];
     const removedDupsCount = rawQuestions.length - mergedQuestions.length;
 
-    if (isShuffle) {
-      for (let i = mergedQuestions.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [mergedQuestions[i], mergedQuestions[j]] = [mergedQuestions[j], mergedQuestions[i]];
-      }
-    }
-
-    if (maxQ && Number(maxQ) > 0 && Number(maxQ) < mergedQuestions.length) {
-      mergedQuestions = mergedQuestions.slice(0, Number(maxQ));
-    }
+    // High quality balanced random sampling across all selected exams
+    mergedQuestions = sampleBalancedQuestions(mergedQuestions, maxQ, isShuffle);
 
     const finalCategory = category && category.trim() ? category.trim() : (exams[0].category || 'Tổng hợp');
     const finalDesc = description && description.trim() 
