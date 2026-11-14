@@ -1308,10 +1308,17 @@
           </div>
           <div class="flex items-center justify-between border-t border-emerald-100/70 pt-2">
             <label class="flex items-center space-x-2 cursor-pointer select-none">
-              <input type="checkbox" id="combine-shuffle-checkbox" checked class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer">
-              <span class="font-bold text-gray-700">Tráo ngẫu nhiên & phân bổ đều câu hỏi từ các đề</span>
+              <input type="checkbox" id="combine-shuffle-checkbox" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer">
+              <span class="font-bold text-gray-700">Đảo ngẫu nhiên thứ tự câu hỏi</span>
             </label>
-            <span class="text-2xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">Chuẩn thi</span>
+            <span class="text-2xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200">Mặc định: Giữ nguyên</span>
+          </div>
+          <div class="flex items-center justify-between border-t border-emerald-100/70 pt-2">
+            <label class="flex items-center space-x-2 cursor-pointer select-none">
+              <input type="checkbox" id="combine-shuffle-options-checkbox" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer">
+              <span class="font-bold text-gray-700">Đảo ngẫu nhiên đáp án (A, B, C, D) cho từng câu</span>
+            </label>
+            <span class="text-2xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200">Mặc định: Giữ nguyên</span>
           </div>
         </div>
       </div>
@@ -1380,6 +1387,18 @@
           <input type="number" id="start-exam-custom-mins" value="45" min="0" max="360" class="w-16 px-2 py-1 rounded-lg border border-gray-300 text-xs font-bold text-center bg-white focus:ring-1 focus:ring-emerald-500">
           <span class="text-xs text-gray-500">phút (0 = không giới hạn)</span>
         </div>
+      </div>
+
+      <!-- Tùy chọn đảo thứ tự (Mặc định: Tắt để giữ nguyên bản đề thi) -->
+      <div class="mb-4 space-y-2 p-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs">
+        <label class="flex items-center space-x-2 cursor-pointer select-none">
+          <input type="checkbox" id="start-exam-shuffle-questions" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer">
+          <span class="font-bold text-gray-700">🔀 Đảo ngẫu nhiên thứ tự câu hỏi</span>
+        </label>
+        <label class="flex items-center space-x-2 cursor-pointer select-none border-t border-gray-200/60 pt-2">
+          <input type="checkbox" id="start-exam-shuffle-options" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer">
+          <span class="font-bold text-gray-700">🎲 Đảo ngẫu nhiên đáp án (A, B, C, D) cho từng câu</span>
+        </label>
       </div>
 
       <!-- Action Buttons -->

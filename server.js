@@ -751,11 +751,11 @@ function sampleBalancedQuestions(questions, maxQuestions, shuffleQuestions = tru
 // 3.5 Combine multiple exams on-the-fly for practice / test (Public)
 app.post('/api/exams/combine', async (req, res) => {
   try {
-    const { examIds, duration_minutes, shuffle = true, deduplicate = true } = req.body;
+    const { examIds, duration_minutes, shuffle = false, deduplicate = true } = req.body;
     const maxQ = req.body.max_questions !== undefined ? req.body.max_questions : req.body.maxQuestions;
     const isDedup = deduplicate !== false && deduplicate !== 'false' && deduplicate !== 0 && deduplicate !== '0';
-    const isShuffle = shuffle !== false && shuffle !== 'false';
-    const isShuffleOptions = req.body.shuffle_options !== false && req.body.shuffleOptions !== false;
+    const isShuffle = shuffle === true || shuffle === 'true' || shuffle === 1 || shuffle === '1';
+    const isShuffleOptions = req.body.shuffle_options === true || req.body.shuffleOptions === true;
 
     if (!examIds || !Array.isArray(examIds) || examIds.length === 0) {
       return res.status(400).json({ success: false, error: 'Vui lòng chọn ít nhất 1 bộ đề thi để gộp' });

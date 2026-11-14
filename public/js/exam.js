@@ -138,17 +138,17 @@ const ExamRunner = {
     if (!this.currentExam || !this.currentExam.questions) return;
 
     if (Object.keys(this.userAnswers).length > 0) {
-      if (!confirm('Bạn đã chọn đáp án cho một số câu hỏi. Tráo câu hỏi & đáp án sẽ làm mới vị trí các câu và các phương án A, B, C, D. Bạn có muốn tiếp tục?')) {
+      if (!confirm('Bạn đã chọn đáp án cho một số câu hỏi. Tráo câu hỏi sẽ làm mới vị trí các câu. Bạn có muốn tiếp tục?')) {
         return;
       }
       this.userAnswers = {};
     }
 
     const source = [...this.currentExam.questions];
-    const shuffled = (this.shuffleQuestions !== false) ? this.shuffleArray(source) : source;
+    const shuffled = this.shuffleArray(source);
 
     this.activeQuestions = shuffled.map((q, idx) => {
-      const qWithOpts = (this.shuffleOptions !== false) ? this.shuffleQuestionOptions(q) : { ...q };
+      const qWithOpts = this.shuffleOptions ? this.shuffleQuestionOptions(q) : { ...q };
       return {
         ...qWithOpts,
         display_number: idx + 1
@@ -163,14 +163,14 @@ const ExamRunner = {
     this.setActiveQuestion(1, true);
 
     if (showToastMsg) {
-      const msg = (this.shuffleOptions !== false)
+      const msg = this.shuffleOptions
         ? '🔀 Đã tráo ngẫu nhiên toàn bộ thứ tự câu hỏi và đáp án A, B, C, D!'
-        : '🔀 Đã tráo ngẫu nhiên toàn bộ thứ tự câu hỏi!';
+        : '🔀 Đã tráo ngẫu nhiên thứ tự các câu hỏi!';
       showToast(msg, 'success');
     }
   },
 
-  // Start Exam (Randomizes/shuffles questions and options every time)
+  // Start Exam (Maintains original question order and options unless explicitly requested)
   startExam(examData, mode = 'test', customQuestions = null, customDurationMinutes = null, options = {}) {
     this.currentExam = examData;
     this.mode = mode;
@@ -180,11 +180,9 @@ const ExamRunner = {
     this.timeSpentSeconds = 0;
     this.hiddenAiBoxes.clear();
 
-    if (options.shuffleQuestions !== undefined) this.shuffleQuestions = options.shuffleQuestions;
-    else if (this.shuffleQuestions === undefined) this.shuffleQuestions = true;
-
-    if (options.shuffleOptions !== undefined) this.shuffleOptions = options.shuffleOptions;
-    else if (this.shuffleOptions === undefined) this.shuffleOptions = true;
+    // Default to FALSE to preserve original order and original options
+    this.shuffleQuestions = options.shuffleQuestions === true;
+    this.shuffleOptions = options.shuffleOptions === true;
 
     const chosenDuration = (customDurationMinutes !== null && customDurationMinutes !== undefined)
       ? parseInt(customDurationMinutes, 10)
@@ -195,13 +193,13 @@ const ExamRunner = {
     const toggleEl = document.getElementById('toggle-instant-ai');
     this.instantAiExplanation = toggleEl ? toggleEl.checked : true;
 
-    // Shuffle questions and options every time entering the exam or retaking
+    // Prepare questions: keep sequential unless shuffleQuestions === true
     const sourceQuestions = customQuestions ? [...customQuestions] : [...examData.questions];
-    const shuffled = (this.shuffleQuestions !== false) ? this.shuffleArray(sourceQuestions) : [...sourceQuestions];
+    const orderedQuestions = this.shuffleQuestions ? this.shuffleArray(sourceQuestions) : [...sourceQuestions];
 
-    // Re-index display_number sequentially (1, 2, ..., N) and shuffle options
-    this.activeQuestions = shuffled.map((q, idx) => {
-      const qWithOpts = (this.shuffleOptions !== false) ? this.shuffleQuestionOptions(q) : { ...q };
+    // Re-index display_number sequentially (1, 2, ..., N), only shuffle options if shuffleOptions === true
+    this.activeQuestions = orderedQuestions.map((q, idx) => {
+      const qWithOpts = this.shuffleOptions ? this.shuffleQuestionOptions(q) : { ...q };
       return {
         ...qWithOpts,
         display_number: idx + 1
@@ -245,7 +243,9 @@ const ExamRunner = {
     const modeBadge = document.getElementById('mode-badge');
     const modeDesc = document.getElementById('mode-desc');
     const durationLabel = chosenDuration === 0 ? 'Không giới hạn thời gian' : `${chosenDuration} phút`;
-    const shuffleBadge = (this.shuffleOptions !== false) ? '🔀 Đã tráo câu & đáp án' : '🔀 Đã tráo câu hỏi';
+    const shuffleBadge = (this.shuffleQuestions && this.shuffleOptions)
+      ? '🔀 Đã tráo câu & đáp án'
+      : (this.shuffleQuestions ? '🔀 Đã tráo câu hỏi' : (this.shuffleOptions ? '🔀 Đã tráo đáp án' : '📋 Thứ tự nguyên bản'));
     if (mode === 'practice') {
       modeBadge.textContent = 'Luyện tập';
       modeBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white';

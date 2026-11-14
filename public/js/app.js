@@ -167,8 +167,8 @@ const App = {
       modal?.classList.add('hidden');
       if (this.pendingExam) {
         const customMins = parseInt(document.getElementById('start-exam-custom-mins')?.value, 10);
-        const shuffleQuestions = document.getElementById('start-exam-shuffle-questions')?.checked ?? true;
-        const shuffleOptions = document.getElementById('start-exam-shuffle-options')?.checked ?? true;
+        const shuffleQuestions = document.getElementById('start-exam-shuffle-questions')?.checked === true;
+        const shuffleOptions = document.getElementById('start-exam-shuffle-options')?.checked === true;
         this.openExam(this.pendingExam.id, this.pendingExam.mode, isNaN(customMins) ? 45 : customMins, {
           shuffleQuestions,
           shuffleOptions
@@ -296,7 +296,8 @@ const App = {
       const maxQuestions = parseInt(document.getElementById('combine-max-questions')?.value, 10) || 0;
       const mode = document.querySelector('input[name="combine_mode"]:checked')?.value || 'practice';
       const deduplicate = document.getElementById('combine-dedup-checkbox')?.checked ?? true;
-      const shuffle = document.getElementById('combine-shuffle-checkbox')?.checked ?? true;
+      const shuffle = document.getElementById('combine-shuffle-checkbox')?.checked === true;
+      const shuffleOptions = document.getElementById('combine-shuffle-options-checkbox')?.checked === true;
 
       const btn = document.getElementById('combine-start-btn');
       if (btn) {
@@ -311,13 +312,19 @@ const App = {
           max_questions: maxQuestions,
           maxQuestions,
           deduplicate,
-          shuffle
+          shuffle,
+          shuffle_options: shuffleOptions
         });
 
         if (res.success && res.data) {
           document.getElementById('modal-combine-exam')?.classList.add('hidden');
           this.showView('exam');
-          ExamRunner.startExam(res.data, mode, null, durationMinutes);
+          // For combined exams, the server already handled question ordering and option shuffle based on user selection.
+          // Do NOT re-shuffle on client to prevent double-shuffling.
+          ExamRunner.startExam(res.data, mode, null, durationMinutes, {
+            shuffleQuestions: false,
+            shuffleOptions: false
+          });
           showToast(res.message || `Đã gộp thành công ${examIds.length} bộ đề (${res.data.questions.length} câu hỏi)!`, 'success');
         } else {
           showToast(res.error || 'Không thể gộp đề thi.', 'error');
@@ -678,12 +685,12 @@ const App = {
   },
 
   // Open Exam
-  async openExam(examId, mode = 'test', customDurationMinutes = null) {
+  async openExam(examId, mode = 'test', customDurationMinutes = null, options = {}) {
     try {
       const res = await API.getExamById(examId);
       if (res.success) {
         this.showView('exam');
-        ExamRunner.startExam(res.data, mode, null, customDurationMinutes);
+        ExamRunner.startExam(res.data, mode, null, customDurationMinutes, options);
       } else {
         showToast(res.error || 'Không thể mở đề thi', 'error');
       }
