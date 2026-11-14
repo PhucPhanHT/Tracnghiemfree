@@ -383,6 +383,7 @@ const App = {
     const themeBtn = document.getElementById('theme-toggle-btn');
     const mobileBottomBar = document.getElementById('exam-mobile-bottom-bar');
     const mobilePalette = document.getElementById('modal-question-palette');
+    const contributeBtn = document.getElementById('btn-contribute-exam');
 
     if (viewName === 'exam') {
       navExamControls?.classList.remove('hidden');
@@ -395,6 +396,7 @@ const App = {
       brandBtn?.classList.add('hidden');
       brandBtn?.classList.remove('flex');
       themeBtn?.classList.add('hidden');
+      contributeBtn?.classList.add('hidden');
     } else {
       navExamControls?.classList.add('hidden');
       navStandardLinks?.classList.remove('hidden');
@@ -407,6 +409,7 @@ const App = {
       brandBtn?.classList.remove('hidden');
       brandBtn?.classList.add('flex');
       themeBtn?.classList.remove('hidden');
+      contributeBtn?.classList.remove('hidden');
 
       // Clear any exam timer
       if (ExamRunner.timerInterval) {
