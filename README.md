@@ -71,8 +71,10 @@
 - Tự động chuyển đổi sang PostgreSQL đám mây (Render Postgres, Neon, Supabase) khi cấu hình biến môi trường `DATABASE_URL`.
 - Cung cấp sẵn script di chuyển dữ liệu tự động 1 lệnh: `npm run migrate:pg`.
 
-### 7. Endpoint Giữ Server Hoạt Động 24/7 (`/health`)
-- Cung cấp route `/health` siêu nhẹ, phản hồi `OK (200)` trong tích tắc mà không tốn truy vấn database, kết hợp với các dịch vụ uptime giữ server Render miễn phí không bị sleep.
+### 7. Endpoint Giữ Server & Database Hoạt Động 24/7 (`/health`)
+- Cung cấp route `/health` siêu nhẹ, tự động truy vấn `SELECT 1` tới cơ sở dữ liệu để đồng thời:
+  1. Giữ máy chủ **Render miễn phí** không bị sleep.
+  2. Giữ **Supabase PostgreSQL** liên tục hoạt động, ngăn chặn triệt để tình trạng Supabase tự động tạm dừng (Pause) sau 7 ngày không có truy vấn.
 
 ---
 
@@ -369,20 +371,20 @@ node change_admin.js admin 123456 "Quản Trị Viên UniPrep"
    https://ten-ung-dung-cua-ban.onrender.com
    ```
 
-### 2. Cấu Hình Cron-job.org Giữ Server Luôn Sẵn Sàng (Không Bị Sleep)
-Render bản Free sẽ tự động "ngủ đông" (sleep) nếu không có yêu cầu truy cập trong vòng 15 phút, khiến lần truy cập sau bị trễ từ 30 - 50 giây. UniPrep được tích hợp sẵn endpoint `/health` siêu nhẹ để xử lý triệt để vấn đề này:
+### 2. Cấu Hình Cron-job.org Giữ Server & Database Luôn Sẵn Sàng (Không Bị Sleep & Pause)
+Render bản Free sẽ tự động "ngủ đông" (sleep) nếu không có yêu cầu truy cập trong vòng 15 phút, còn Supabase bản Free sẽ tự động "tạm dừng" (pause) nếu sau 7 ngày không có truy vấn dữ liệu nào. Endpoint `/health` của UniPrep đã được tích hợp truy vấn nhẹ `SELECT 1` để giữ cho cả Render và Supabase luôn thức 24/7:
 
 1. Đăng ký tài khoản miễn phí tại [cron-job.org](https://cron-job.org).
 2. Vào mục **Cronjobs** -> Bấm **Create cronjob**.
 3. Cấu hình như sau:
-   - **Title**: `Keep Alive UniPrep Render`
+   - **Title**: `Keep Alive UniPrep Render & Supabase`
    - **URL**: Điền địa chỉ ứng dụng kèm đuôi `/health` *(lưu ý chỉ 1 dấu gạch chéo)*:
      ```text
      https://ten-ung-dung-cua-ban.onrender.com/health
      ```
    - **Schedule**: Chọn **Every 10 minutes** (Mỗi 10 phút ping một lần).
    - **Request Method**: `GET`.
-4. Bấm **Create** để lưu. Từ thời điểm này, server của bạn sẽ luôn thức 24/7 với thời gian phản hồi tức thì.
+4. Bấm **Create** để lưu. Từ thời điểm này, cả máy chủ Render lẫn cơ sở dữ liệu Supabase của bạn sẽ luôn hoạt động 24/7 mà không lo bị đóng băng hay tạm dừng.
 
 ---
 

@@ -67,8 +67,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Health check endpoint for keep-alive pings (Cron-job.org / UptimeRobot)
 // Matches /health, //health, /health/, etc.
-app.all(/^\/+health\/?$/i, (req, res) => {
-  res.status(200).send('OK');
+// Tự động truy vấn nhẹ (SELECT 1) tới cơ sở dữ liệu để giữ Supabase / PostgreSQL không bị tạm dừng (Paused sau 7 ngày)
+app.all(/^\/+health\/?$/i, async (req, res) => {
+  try {
+    await get('SELECT 1 as alive');
+    res.status(200).send('OK (Server & Database Active)');
+  } catch (err) {
+    // Nếu DB đang trong quá trình resume hoặc có sự cố, vẫn trả về 200 để giữ Render luôn sống
+    res.status(200).send(`OK (Server Active, DB Connecting: ${err.message})`);
+  }
 });
 
 // ================= ADMIN AUTH ENDPOINTS =================
@@ -584,6 +591,86 @@ function secureShuffleArray(array) {
   return arr;
 }
 
+/**
+ * Smart Question Options Shuffler (A, B, C, D)
+ * Randomizes the 4 option choices while:
+ * 1. Automatically tracking and updating correct_answer to the new option letter
+ * 2. Preserving interdependent options (e.g. keeping 'Tất cả các phương án trên' / 'Cả 3 phương án trên' at the end)
+ * 3. Keeping questions with explicit letter references ('Cả A và B', 'Phương án A và C') intact so logical meaning is not broken
+ * 4. Cleaning accidental letter prefixes (e.g. 'A. ', 'b) ') so display remains pristine
+ */
+function shuffleQuestionOptionsServer(q) {
+  if (!q) return q;
+
+  const rawOpts = [
+    { key: 'A', text: q.option_a },
+    { key: 'B', text: q.option_b },
+    { key: 'C', text: q.option_c },
+    { key: 'D', text: q.option_d }
+  ].filter(o => o.text && typeof o.text === 'string' && o.text.trim());
+
+  if (rawOpts.length <= 1) return { ...q };
+
+  const cleanedOpts = rawOpts.map(o => ({
+    key: o.key,
+    text: (o.text || '').replace(/^[A-Da-d][\.\)\:\-]\s*/, '').trim()
+  }));
+
+  // Preserve questions that explicitly reference letters like 'Cả A và B', 'Phương án B và C'
+  const letterRefRegex = /(cả|phương án|đáp án)\s+([A-D]\s*(và|,|&)\s*)+[A-D]\b/i;
+  const hasLetterRef = cleanedOpts.some(o => letterRefRegex.test(o.text));
+  if (hasLetterRef) {
+    return { ...q, is_options_shuffled: false };
+  }
+
+  const origCorrectKey = (q.original_correct_answer || q.correct_answer || 'A').trim().toUpperCase();
+  const correctOpt = cleanedOpts.find(o => o.key.toUpperCase() === origCorrectKey);
+  const correctText = correctOpt ? correctOpt.text : cleanedOpts[0].text;
+
+  // If the last option is 'Tất cả...', 'Cả 3...', keep it at the end and shuffle preceding options
+  const allAboveRegex = /(tất cả|cả 3|cả ba|cả 4|cả bốn)\s+(phương án|đáp án|yếu tố|câu|trên)/i;
+  const lastOpt = cleanedOpts[cleanedOpts.length - 1];
+  const isLastAllAbove = allAboveRegex.test(lastOpt.text);
+
+  let poolToShuffle;
+  let fixedEnd = null;
+
+  if (isLastAllAbove && cleanedOpts.length >= 3) {
+    poolToShuffle = cleanedOpts.slice(0, cleanedOpts.length - 1);
+    fixedEnd = lastOpt;
+  } else {
+    poolToShuffle = [...cleanedOpts];
+  }
+
+  const shuffledPool = secureShuffleArray(poolToShuffle);
+  if (fixedEnd) {
+    shuffledPool.push(fixedEnd);
+  }
+
+  const letters = ['A', 'B', 'C', 'D'];
+  const newQ = { ...q, is_options_shuffled: true, original_correct_answer: origCorrectKey };
+  let newCorrectAnswer = origCorrectKey;
+
+  shuffledPool.forEach((opt, idx) => {
+    const letter = letters[idx];
+    newQ['option_' + letter.toLowerCase()] = opt.text;
+    if (opt.text === correctText) {
+      newCorrectAnswer = letter;
+    }
+  });
+
+  newQ.correct_answer = newCorrectAnswer;
+
+  if (newQ.explanation && origCorrectKey !== newCorrectAnswer) {
+    newQ.explanation = newQ.explanation.replace(
+      new RegExp('(phương án đúng là|đáp án đúng là|đáp án là|chọn)\\s+' + origCorrectKey + '\\b', 'gi'),
+      `$1 ${newCorrectAnswer}`
+    );
+  }
+
+  return newQ;
+}
+
 function sampleBalancedQuestions(questions, maxQuestions, shuffleQuestions = true) {
   if (!questions || questions.length === 0) return [];
   
@@ -668,6 +755,7 @@ app.post('/api/exams/combine', async (req, res) => {
     const maxQ = req.body.max_questions !== undefined ? req.body.max_questions : req.body.maxQuestions;
     const isDedup = deduplicate !== false && deduplicate !== 'false' && deduplicate !== 0 && deduplicate !== '0';
     const isShuffle = shuffle !== false && shuffle !== 'false';
+    const isShuffleOptions = req.body.shuffle_options !== false && req.body.shuffleOptions !== false;
 
     if (!examIds || !Array.isArray(examIds) || examIds.length === 0) {
       return res.status(400).json({ success: false, error: 'Vui lòng chọn ít nhất 1 bộ đề thi để gộp' });
@@ -689,6 +777,11 @@ app.post('/api/exams/combine', async (req, res) => {
 
     // High quality balanced random sampling across all selected exams
     finalQuestions = sampleBalancedQuestions(finalQuestions, maxQ, isShuffle);
+
+    // Shuffle options for each question if requested
+    if (isShuffleOptions) {
+      finalQuestions = finalQuestions.map(q => shuffleQuestionOptionsServer(q));
+    }
 
     // Number sequentially
     finalQuestions = finalQuestions.map((q, idx) => ({
@@ -763,11 +856,37 @@ app.post('/api/exams/:id/submit', async (req, res) => {
     const unansweredQuestionIds = [];
     const questionResults = [];
 
+    const clientQuestionsMap = new Map();
+    if (Array.isArray(questionsList)) {
+      questionsList.forEach(cq => {
+        if (cq && (cq.id || cq.question_number)) {
+          if (cq.id) clientQuestionsMap.set(String(cq.id), cq);
+          if (cq.question_number) clientQuestionsMap.set('qn_' + cq.question_number, cq);
+        }
+      });
+    }
+
     questions.forEach((q) => {
-      // Support matching by q.id (recommended for shuffled exams) or q.question_number
+      const clientQ = clientQuestionsMap.get(String(q.id)) || clientQuestionsMap.get('qn_' + q.question_number);
       const studentAns = userAnswers[q.id] || userAnswers[String(q.id)] || userAnswers[q.question_number];
       const isAnswered = Boolean(studentAns);
-      const isCorrect = isAnswered && studentAns.toUpperCase() === q.correct_answer.toUpperCase();
+
+      let isCorrect = false;
+      let effectiveCorrectAnswer = q.correct_answer;
+
+      if (isAnswered) {
+        if (clientQ && clientQ.is_options_shuffled) {
+          // If options were shuffled on client, match chosen option text with DB correct option text
+          const dbCorrectText = normalizeExamText(q[`option_${(q.correct_answer || 'A').toLowerCase()}`]);
+          const chosenOptKey = `option_${studentAns.toLowerCase()}`;
+          const clientChosenText = normalizeExamText(clientQ[chosenOptKey]);
+
+          isCorrect = Boolean(clientChosenText && dbCorrectText && clientChosenText === dbCorrectText);
+          effectiveCorrectAnswer = clientQ.correct_answer || q.correct_answer;
+        } else {
+          isCorrect = studentAns.toUpperCase() === (q.correct_answer || 'A').toUpperCase();
+        }
+      }
 
       if (!isAnswered) {
         unansweredCount++;
@@ -785,10 +904,10 @@ app.post('/api/exams/:id/submit', async (req, res) => {
         id: q.id,
         question_number: q.question_number,
         studentAnswer: studentAns || null,
-        correctAnswer: q.correct_answer,
+        correctAnswer: effectiveCorrectAnswer,
         isCorrect,
         isAnswered,
-        explanation: q.explanation || 'Không có giải thích chi tiết.'
+        explanation: (clientQ && clientQ.explanation) || q.explanation || 'Không có giải thích chi tiết.'
       });
     });
 
@@ -1078,6 +1197,11 @@ app.post('/api/admin/exams/merge', requireAdminAuth, async (req, res) => {
 
     // High quality balanced random sampling across all selected exams
     mergedQuestions = sampleBalancedQuestions(mergedQuestions, maxQ, isShuffle);
+
+    const isShuffleOptions = req.body.shuffle_options === true || req.body.shuffleOptions === true;
+    if (isShuffleOptions) {
+      mergedQuestions = mergedQuestions.map(q => shuffleQuestionOptionsServer(q));
+    }
 
     const finalCategory = category && category.trim() ? category.trim() : (exams[0].category || 'Tổng hợp');
     const finalDesc = description && description.trim() 

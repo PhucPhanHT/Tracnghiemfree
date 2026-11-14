@@ -56,24 +56,104 @@ const ExamRunner = {
     return arr;
   },
 
+  // Smart Question Options Shuffler (A, B, C, D)
+  // Randomizes the 4 option choices while updating correct_answer to the new letter
+  shuffleQuestionOptions(q) {
+    if (!q) return q;
+
+    // Use original untouched options if saved, to prevent answer drift across multiple shuffles
+    const rawOpts = q.original_options ? [...q.original_options] : [
+      { key: 'A', text: q.option_a },
+      { key: 'B', text: q.option_b },
+      { key: 'C', text: q.option_c },
+      { key: 'D', text: q.option_d }
+    ].filter(o => o.text && typeof o.text === 'string' && o.text.trim());
+
+    if (rawOpts.length <= 1) return { ...q };
+
+    // Clean accidental letter prefixes from option texts (e.g. "A. ", "b) ")
+    const cleanedOpts = rawOpts.map(o => ({
+      key: o.key,
+      text: (o.text || '').replace(/^[A-Da-d][\.\)\:\-]\s*/, '').trim()
+    }));
+
+    // Preserve questions that explicitly reference letters like 'Cả A và B', 'Phương án B và C'
+    const letterRefRegex = /(cả|phương án|đáp án)\s+([A-D]\s*(và|,|&)\s*)+[A-D]\b/i;
+    const hasLetterRef = cleanedOpts.some(o => letterRefRegex.test(o.text));
+    if (hasLetterRef) {
+      return { ...q, is_options_shuffled: false };
+    }
+
+    const origCorrectKey = (q.original_correct_answer || q.correct_answer || 'A').trim().toUpperCase();
+    const correctOpt = cleanedOpts.find(o => o.key.toUpperCase() === origCorrectKey);
+    const correctText = correctOpt ? correctOpt.text : cleanedOpts[0].text;
+
+    // Keep 'Tất cả các phương án trên' / 'Cả 3 phương án trên' at the bottom
+    const allAboveRegex = /(tất cả|cả 3|cả ba|cả 4|cả bốn)\s+(phương án|đáp án|yếu tố|câu|trên)/i;
+    const lastOpt = cleanedOpts[cleanedOpts.length - 1];
+    const isLastAllAbove = allAboveRegex.test(lastOpt.text);
+
+    let poolToShuffle;
+    let fixedEnd = null;
+
+    if (isLastAllAbove && cleanedOpts.length >= 3) {
+      poolToShuffle = cleanedOpts.slice(0, cleanedOpts.length - 1);
+      fixedEnd = lastOpt;
+    } else {
+      poolToShuffle = [...cleanedOpts];
+    }
+
+    const shuffledPool = this.shuffleArray(poolToShuffle);
+    if (fixedEnd) {
+      shuffledPool.push(fixedEnd);
+    }
+
+    const letters = ['A', 'B', 'C', 'D'];
+    const newQ = { ...q, original_options: rawOpts, original_correct_answer: origCorrectKey, is_options_shuffled: true };
+    let newCorrectAnswer = origCorrectKey;
+
+    shuffledPool.forEach((opt, idx) => {
+      const letter = letters[idx];
+      newQ['option_' + letter.toLowerCase()] = opt.text;
+      if (opt.text === correctText) {
+        newCorrectAnswer = letter;
+      }
+    });
+
+    newQ.correct_answer = newCorrectAnswer;
+
+    // Synchronize letter reference in explanation
+    if (newQ.explanation && origCorrectKey !== newCorrectAnswer) {
+      newQ.explanation = newQ.explanation.replace(
+        new RegExp('(phương án đúng là|đáp án đúng là|đáp án là|chọn)\\s+' + origCorrectKey + '\\b', 'gi'),
+        `$1 ${newCorrectAnswer}`
+      );
+    }
+
+    return newQ;
+  },
+
   // On-demand shuffle button handler (can be clicked anytime during test)
   shuffleExam(showToastMsg = true) {
     if (!this.currentExam || !this.currentExam.questions) return;
 
     if (Object.keys(this.userAnswers).length > 0) {
-      if (!confirm('Bạn đã chọn đáp án cho một số câu hỏi. Tráo câu hỏi sẽ làm mới vị trí các câu. Bạn có muốn tiếp tục?')) {
+      if (!confirm('Bạn đã chọn đáp án cho một số câu hỏi. Tráo câu hỏi & đáp án sẽ làm mới vị trí các câu và các phương án A, B, C, D. Bạn có muốn tiếp tục?')) {
         return;
       }
       this.userAnswers = {};
     }
 
     const source = [...this.currentExam.questions];
-    const shuffled = this.shuffleArray(source);
+    const shuffled = (this.shuffleQuestions !== false) ? this.shuffleArray(source) : source;
 
-    this.activeQuestions = shuffled.map((q, idx) => ({
-      ...q,
-      display_number: idx + 1
-    }));
+    this.activeQuestions = shuffled.map((q, idx) => {
+      const qWithOpts = (this.shuffleOptions !== false) ? this.shuffleQuestionOptions(q) : { ...q };
+      return {
+        ...qWithOpts,
+        display_number: idx + 1
+      };
+    });
     this.activeQuestionNumber = 1;
 
     this.renderQuestions();
@@ -83,12 +163,15 @@ const ExamRunner = {
     this.setActiveQuestion(1, true);
 
     if (showToastMsg) {
-      showToast('🔀 Đã tráo ngẫu nhiên toàn bộ thứ tự câu hỏi!', 'success');
+      const msg = (this.shuffleOptions !== false)
+        ? '🔀 Đã tráo ngẫu nhiên toàn bộ thứ tự câu hỏi và đáp án A, B, C, D!'
+        : '🔀 Đã tráo ngẫu nhiên toàn bộ thứ tự câu hỏi!';
+      showToast(msg, 'success');
     }
   },
 
-  // Start Exam (Randomizes/shuffles questions every time)
-  startExam(examData, mode = 'test', customQuestions = null, customDurationMinutes = null) {
+  // Start Exam (Randomizes/shuffles questions and options every time)
+  startExam(examData, mode = 'test', customQuestions = null, customDurationMinutes = null, options = {}) {
     this.currentExam = examData;
     this.mode = mode;
     this.isReviewMode = false;
@@ -96,6 +179,12 @@ const ExamRunner = {
     this.lastSubmissionResult = null;
     this.timeSpentSeconds = 0;
     this.hiddenAiBoxes.clear();
+
+    if (options.shuffleQuestions !== undefined) this.shuffleQuestions = options.shuffleQuestions;
+    else if (this.shuffleQuestions === undefined) this.shuffleQuestions = true;
+
+    if (options.shuffleOptions !== undefined) this.shuffleOptions = options.shuffleOptions;
+    else if (this.shuffleOptions === undefined) this.shuffleOptions = true;
 
     const chosenDuration = (customDurationMinutes !== null && customDurationMinutes !== undefined)
       ? parseInt(customDurationMinutes, 10)
@@ -106,15 +195,18 @@ const ExamRunner = {
     const toggleEl = document.getElementById('toggle-instant-ai');
     this.instantAiExplanation = toggleEl ? toggleEl.checked : true;
 
-    // Shuffle questions every time entering the exam or retaking
+    // Shuffle questions and options every time entering the exam or retaking
     const sourceQuestions = customQuestions ? [...customQuestions] : [...examData.questions];
-    const shuffled = this.shuffleArray(sourceQuestions);
+    const shuffled = (this.shuffleQuestions !== false) ? this.shuffleArray(sourceQuestions) : [...sourceQuestions];
 
-    // Re-index display_number sequentially (1, 2, ..., N)
-    this.activeQuestions = shuffled.map((q, idx) => ({
-      ...q,
-      display_number: idx + 1
-    }));
+    // Re-index display_number sequentially (1, 2, ..., N) and shuffle options
+    this.activeQuestions = shuffled.map((q, idx) => {
+      const qWithOpts = (this.shuffleOptions !== false) ? this.shuffleQuestionOptions(q) : { ...q };
+      return {
+        ...qWithOpts,
+        display_number: idx + 1
+      };
+    });
     this.activeQuestionNumber = 1;
 
     // Setup Header UI
@@ -153,14 +245,15 @@ const ExamRunner = {
     const modeBadge = document.getElementById('mode-badge');
     const modeDesc = document.getElementById('mode-desc');
     const durationLabel = chosenDuration === 0 ? 'Không giới hạn thời gian' : `${chosenDuration} phút`;
+    const shuffleBadge = (this.shuffleOptions !== false) ? '🔀 Đã tráo câu & đáp án' : '🔀 Đã tráo câu hỏi';
     if (mode === 'practice') {
       modeBadge.textContent = 'Luyện tập';
       modeBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white';
-      modeDesc.innerHTML = `Chế độ luyện tập: Chọn đáp án để biết ngay đúng/sai và xem phân tích AI. <span class="ml-1 inline-flex items-center text-xs font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">⏱️ ${durationLabel}</span> <span class="ml-1 inline-flex items-center text-xs font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">🔀 Đã tráo câu hỏi</span>`;
+      modeDesc.innerHTML = `Chế độ luyện tập: Chọn đáp án để biết ngay đúng/sai và xem phân tích AI. <span class="ml-1 inline-flex items-center text-xs font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">⏱️ ${durationLabel}</span> <span class="ml-1 inline-flex items-center text-xs font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">${shuffleBadge}</span>`;
     } else {
       modeBadge.textContent = 'Kiểm tra';
       modeBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-600 text-white';
-      modeDesc.innerHTML = `Thời gian làm bài: <b>${durationLabel}</b>. Nhấn "Nộp bài" khi hoàn thành. <span class="ml-1 inline-flex items-center text-xs font-semibold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full">🔀 Đã tráo câu hỏi</span>`;
+      modeDesc.innerHTML = `Thời gian làm bài: <b>${durationLabel}</b>. Nhấn "Nộp bài" khi hoàn thành. <span class="ml-1 inline-flex items-center text-xs font-semibold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full">${shuffleBadge}</span>`;
     }
 
     // Bind instant AI toggle change
@@ -921,10 +1014,10 @@ const ExamRunner = {
         this.currentExam.id,
         this.userAnswers,
         this.timeSpentSeconds,
-        isVirtual ? {
+        {
           virtualExamTitle: this.currentExam.title,
           questionsList: this.activeQuestions
-        } : {}
+        }
       );
 
       if (res && res.success) {

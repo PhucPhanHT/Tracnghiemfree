@@ -167,7 +167,12 @@ const App = {
       modal?.classList.add('hidden');
       if (this.pendingExam) {
         const customMins = parseInt(document.getElementById('start-exam-custom-mins')?.value, 10);
-        this.openExam(this.pendingExam.id, this.pendingExam.mode, isNaN(customMins) ? 45 : customMins);
+        const shuffleQuestions = document.getElementById('start-exam-shuffle-questions')?.checked ?? true;
+        const shuffleOptions = document.getElementById('start-exam-shuffle-options')?.checked ?? true;
+        this.openExam(this.pendingExam.id, this.pendingExam.mode, isNaN(customMins) ? 45 : customMins, {
+          shuffleQuestions,
+          shuffleOptions
+        });
       }
     });
 
